@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+TASK_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -x "$TASK_ROOT/.venv/bin/python" ]; then
+    exec "$TASK_ROOT/.venv/bin/python" "$TASK_ROOT/tools/validate_local.py" "$@"
+fi
+exec python3.12 "$TASK_ROOT/tools/validate_local.py" "$@"

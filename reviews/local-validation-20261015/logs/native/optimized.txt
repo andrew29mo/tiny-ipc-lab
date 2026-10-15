@@ -1,0 +1,78 @@
+......Process SpawnProcess-26:
+Traceback (most recent call last):
+  File "/python-runtime/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/python-runtime/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/workspace/src/tiny_ipc_lab/experiment.py", line 119, in consumer
+    value = receiver.receive(seq)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/protocol.py", line 86, in receive
+    header = self.connection.recv_bytes(HEADER.size)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+    raise EOFError
+EOFError
+..........normal-64 block 1/2: pipe
+normal-64 block 1/2: shared
+normal-64 block 1/2: pool_1
+normal-64 block 1/2: pool_n
+normal-64 block 1/2: window_pipe
+normal-64 block 2/2: shared
+normal-64 block 2/2: pool_1
+normal-64 block 2/2: pool_n
+normal-64 block 2/2: window_pipe
+normal-64 block 2/2: pipe
+slow-64 block 1/2: pipe
+slow-64 block 1/2: shared
+slow-64 block 1/2: pool_1
+slow-64 block 1/2: pool_n
+slow-64 block 1/2: window_pipe
+slow-64 block 2/2: shared
+slow-64 block 2/2: pool_1
+slow-64 block 2/2: pool_n
+slow-64 block 2/2: window_pipe
+slow-64 block 2/2: pipe
+normal-64 block 1/1: pipe
+...........Process SpawnProcess-107:
+Traceback (most recent call last):
+  File "/python-runtime/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/python-runtime/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/workspace/tests/test_pool.py", line 176, in marked_producer
+    real_producer(*args)
+  File "/workspace/src/tiny_ipc_lab/experiment.py", line 67, in producer
+    loan, target = sender.acquire(seq)
+                   ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/pool.py", line 64, in acquire
+    self.acknowledge()  # Backpressure: no overwrite, allocation, drop or unbounded queue.
+    ^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/pool.py", line 47, in acknowledge
+    raw = self.connection.recv_bytes(RELEASE.size)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/python-runtime/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+    raise EOFError
+EOFError
+.......Measuring 64 bytes, 9 messages, pair 1, pipe
+Measuring 64 bytes, 9 messages, pair 1, shared
+Measuring 64 bytes, 9 messages, pair 2, shared
+Measuring 64 bytes, 9 messages, pair 2, pipe
+.Measuring 64 bytes, 1 messages, pair 1, pipe
+...........
+----------------------------------------------------------------------
+Ran 46 tests in 28.201s
+
+OK

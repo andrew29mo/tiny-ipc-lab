@@ -1,0 +1,2 @@
+Verified every sequence/value CRC, timing/RSS statistic, clean exit, fair workload and canonical JSON/HTML/README.
+Original 48 raw trials and all paired ratios reverified from immutable Git objects.

@@ -26,27 +26,5 @@ jobs:
           python-version: '3.12'
       - name: Install pinned dependencies
         run: python -m pip install -r requirements-dev.txt
-      - name: Production protocol, processes and reports
-        run: python -m unittest discover -s tests -v
-      - name: Optimized Python validation
-        run: python -O -m unittest discover -s tests
-      - name: Behavioral source faults
-        run: python tools/run_mutations.py
-      - name: Full retained evidence and publication hygiene
-        run: |
-          python tools/check_project.py --directory results/macos-arm64-pool-reviewed
-          python tools/check_project.py --directory results/macos-arm64-pool
-          python tools/check_project.py --directory results/macos-arm64-pool-development
-          python tools/check_project.py
-          python tools/check_project.py --directory results/macos-arm64-pipe-bytes
-          python tools/diagnose_rss.py --verify
-          python tools/audit_original.py --verify
-          python tools/audit_pool_original.py --verify
-      - name: Actual IPC smoke, not a performance gate
-        run: |
-          tiny-ipc-lab --output results/local/ci --sizes 64 4096 --count 17 --pairs 2
-          python tools/check_project.py --directory results/local/ci --smoke
-          tiny-ipc-lab --pipe-receive bytes --output results/local/ci-bytes --sizes 64 4096 --count 17 --pairs 2
-          python tools/check_project.py --directory results/local/ci-bytes --smoke
-          python -m tiny_ipc_lab.pool_bench --output results/local/ci-pool --sizes 64 4096 --blocks 2 --capacity 3 --smoke
-          python tools/check_project.py --directory results/local/ci-pool --smoke
+      - name: Shared production tests and IPC smoke (no performance gate)
+        run: python tools/validation_suite.py --output results/local/github-ci --environment github-hosted --benchmark smoke

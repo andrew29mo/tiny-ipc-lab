@@ -1,0 +1,1 @@
+Retained RSS diagnosis controls, checksums and summary verified; probes are not rerun.

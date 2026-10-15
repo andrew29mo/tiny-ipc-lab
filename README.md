@@ -28,7 +28,7 @@ python -m tiny_ipc_lab.pool_bench --output results/local/pool-smoke --sizes 64 4
 python tools/check_project.py --directory results/local/pool-smoke --smoke
 ```
 
-[Current reviewed pool JSON/HTML and raw evidence](results/macos-arm64-pool-reviewed/README.md) retain every block. See the [pool ownership, fairness and measurement contract](docs/POOL.md). These are closed-loop verified exchanges, not a shared external arrival schedule or pure transport bandwidth. Producer ACK-observed latency includes loan waiting and deferred ACK collection; consumer-ready timing is reported separately and can rank profiles differently; a larger window can improve throughput while worsening completion latency. Payload slots are bounded, while evidence records still grow with the finite message count.
+[Reviewed native primary-run JSON/HTML and raw evidence](results/macos-arm64-pool-reviewed/README.md) retain every block. See the [pool ownership, fairness and measurement contract](docs/POOL.md). These are closed-loop verified exchanges, not a shared external arrival schedule or pure transport bandwidth. Producer ACK-observed latency includes loan waiting and deferred ACK collection; consumer-ready timing is reported separately and can rank profiles differently; a larger window can improve throughput while worsening completion latency. Payload slots are bounded, while evidence records still grow with the finite message count.
 
 <!-- POOL_RESULTS_START -->
 The primary run retains **200 trials and 654,450 verified tensors** across six normal sizes and two slow-consumer cases. Five rotating blocks include every profile at every order position.
@@ -111,12 +111,29 @@ python tools/audit_original.py --verify
 python tools/audit_pool_original.py --verify
 ```
 
-Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Ten deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. Linux/macOS CI also executes real-process smoke measurements; their timings are not performance gates.
+Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Ten deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. The Linux/macOS GitHub workflow is configured to execute real-process smoke measurements; their timings are not performance gates.
 
-Historical verification needs full Git history. The diagnostic verifier checks retained controls rather than rerunning instrumented probes in CI. Both public receive API profiles and the five-profile pool comparison get actual-process smoke tests in CI.
+Historical verification needs full Git history. The diagnostic verifier checks retained controls rather than rerunning instrumented probes in CI. The workflow configures actual-process smoke tests for both public receive API profiles and the five-profile pool comparison.
 
 See [methodology](docs/METHODOLOGY.md), [related systems and next experiments](docs/RELATED_WORK.md), [security scope](SECURITY.md) and [third-party materials](THIRD_PARTY_NOTICES.md).
 
 ## License status
 
 No license has been selected for original project contributions. Installed dependencies retain their upstream licenses. No license from a sibling project is implicitly assigned here.
+
+## Local macOS and Linux validation
+
+Run `./tools/validate-local` on macOS to install pinned Colima/Lima tools, validate
+one source snapshot natively and in a same-architecture Linux container, and retain
+formal test logs plus separate real IPC JSON/HTML/RSS measurements. See
+[setup, evidence and VM limitations](docs/LOCAL_VALIDATION.md). This does not require
+GitHub Actions minutes; Linux VM measurements are not native-hardware claims.
+
+The [2026-10-15 local validation record](reviews/local-validation-20261015/README.md)
+passed all 17 suite steps on native macOS ARM64 and Colima Linux ARM64: each ran
+46 normal tests, 46 optimized-Python tests, ten detected source faults, and 200
+full measurement trials covering 654,450 exchanges. [Native measurements](reviews/local-validation-20261015/native-measurements.md)
+and [virtualized Linux measurements](reviews/local-validation-20261015/linux-measurements.md)
+are separate observations; worker RSS excludes VM/daemon overhead. The compact
+record includes sanitized logs and derived observations; full raw JSON/HTML and
+original logs remain local. This is not a GitHub-hosted CI success or x86_64 validation.
