@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.env
+.env.*
+.DS_Store
+.codex/
+.agents/
+AGENTS.md
+codex-notes/
+backups/
+*.log
+results/local/

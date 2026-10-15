@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools==83.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tiny-ipc-lab"
+version = "0.1.0"
+description = "Verified Pipe and shared-memory tensor round trips"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = ["numpy==1.26.4", "psutil==7.0.0"]
+
+[project.scripts]
+tiny-ipc-lab = "tiny_ipc_lab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
