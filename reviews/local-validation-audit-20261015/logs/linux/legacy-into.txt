@@ -1,0 +1,8 @@
+Measuring 64 bytes, 17 messages, pair 1, pipe
+Measuring 64 bytes, 17 messages, pair 1, shared
+Measuring 64 bytes, 17 messages, pair 2, shared
+Measuring 64 bytes, 17 messages, pair 2, pipe
+Measuring 4096 bytes, 17 messages, pair 1, pipe
+Measuring 4096 bytes, 17 messages, pair 1, shared
+Measuring 4096 bytes, 17 messages, pair 2, shared
+Measuring 4096 bytes, 17 messages, pair 2, pipe

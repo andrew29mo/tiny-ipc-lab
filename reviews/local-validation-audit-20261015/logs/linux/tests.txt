@@ -1,0 +1,138 @@
+test_actual_spawn_workers_check_all_rows_and_cleanup_after_reuse (test_ipc.ProcessTests.test_actual_spawn_workers_check_all_rows_and_cleanup_after_reuse) ... ok
+test_allocation_failure_after_shared_create_still_unlinks (test_ipc.ProcessTests.test_allocation_failure_after_shared_create_still_unlinks) ... ok
+test_invalid_configuration_does_not_start_children (test_ipc.ProcessTests.test_invalid_configuration_does_not_start_children) ... ok
+test_parent_descriptors_do_not_accumulate_over_repeated_trials (test_ipc.ProcessTests.test_parent_descriptors_do_not_accumulate_over_repeated_trials) ... ok
+test_partial_control_result_cannot_block_supervisor_deadline (test_ipc.ProcessTests.test_partial_control_result_cannot_block_supervisor_deadline) ... ok
+test_public_bytes_api_actual_large_transfers_and_reuse (test_ipc.ProcessTests.test_public_bytes_api_actual_large_transfers_and_reuse) ... ok
+test_real_worker_crashes_do_not_leave_peers_or_shared_segments (test_ipc.ProcessTests.test_real_worker_crashes_do_not_leave_peers_or_shared_segments) ... Process SpawnProcess-26:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/workspace/src/tiny_ipc_lab/experiment.py", line 119, in consumer
+    value = receiver.receive(seq)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/protocol.py", line 86, in receive
+    header = self.connection.recv_bytes(HEADER.size)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+    raise EOFError
+EOFError
+ok
+test_stalled_real_consumer_hits_trial_deadline_and_is_reaped (test_ipc.ProcessTests.test_stalled_real_consumer_hits_trial_deadline_and_is_reaped) ... ok
+test_ack_is_required_before_buffer_reuse_and_every_generation_changes (test_ipc.ProtocolTests.test_ack_is_required_before_buffer_reuse_and_every_generation_changes) ... ok
+test_bytes_receive_api_checks_complete_tensor_and_short_payload (test_ipc.ProtocolTests.test_bytes_receive_api_checks_complete_tensor_and_short_payload) ... ok
+test_legacy_protocol_rejects_pool_modes_instead_of_silently_skipping_payload (test_ipc.ProtocolTests.test_legacy_protocol_rejects_pool_modes_instead_of_silently_skipping_payload) ... ok
+test_receiver_checks_middle_values_and_stale_shared_generation (test_ipc.ProtocolTests.test_receiver_checks_middle_values_and_stale_shared_generation) ... ok
+test_receiver_rejects_skipped_repeated_or_wrong_length_headers (test_ipc.ProtocolTests.test_receiver_rejects_skipped_repeated_or_wrong_length_headers) ... ok
+test_sender_rejects_wrong_ack_sequence_or_crc (test_ipc.ProtocolTests.test_sender_rejects_wrong_ack_sequence_or_crc) ... ok
+test_shared_consumer_view_is_read_only_while_owner_can_write (test_ipc.ProtocolTests.test_shared_consumer_view_is_read_only_while_owner_can_write) ... ok
+test_short_pipe_payload_is_not_completed_using_stale_buffer_bytes (test_ipc.ProtocolTests.test_short_pipe_payload_is_not_completed_using_stale_buffer_bytes) ... ok
+normal-64 block 1/2: pipe
+normal-64 block 1/2: shared
+normal-64 block 1/2: pool_1
+normal-64 block 1/2: pool_n
+normal-64 block 1/2: window_pipe
+normal-64 block 2/2: shared
+normal-64 block 2/2: pool_1
+normal-64 block 2/2: pool_n
+normal-64 block 2/2: window_pipe
+normal-64 block 2/2: pipe
+slow-64 block 1/2: pipe
+slow-64 block 1/2: shared
+slow-64 block 1/2: pool_1
+slow-64 block 1/2: pool_n
+slow-64 block 1/2: window_pipe
+slow-64 block 2/2: shared
+slow-64 block 2/2: pool_1
+slow-64 block 2/2: pool_n
+slow-64 block 2/2: window_pipe
+slow-64 block 2/2: pipe
+test_failed_trial_retains_partial_index_and_cleanup_without_final_report (test_pool.PoolEvidenceTests.test_failed_trial_retains_partial_index_and_cleanup_without_final_report) ... normal-64 block 1/1: pipe
+ok
+test_forged_metrics_policy_and_missing_trials_are_rejected (test_pool.PoolEvidenceTests.test_forged_metrics_policy_and_missing_trials_are_rejected) ... ok
+test_independent_oracle_rejects_forged_crc_and_illegal_reuse (test_pool.PoolEvidenceTests.test_independent_oracle_rejects_forged_crc_and_illegal_reuse) ... ok
+test_production_reports_reconcile_and_all_profiles_same_work (test_pool.PoolEvidenceTests.test_production_reports_reconcile_and_all_profiles_same_work) ... ok
+test_hand_calculated_overlap_capacity_wait_and_tail_duration (test_pool.PoolMetricsTests.test_hand_calculated_overlap_capacity_wait_and_tail_duration) ... ok
+test_rejects_fifo_ack_reordering_and_impossible_consumer_timing (test_pool.PoolMetricsTests.test_rejects_fifo_ack_reordering_and_impossible_consumer_timing) ... ok
+test_actual_tail_windows_and_slow_consumer_all_profiles (test_pool.PoolProcessTests.test_actual_tail_windows_and_slow_consumer_all_profiles) ... ok
+test_pool_segment_is_unlinked_if_later_pipe_allocation_fails (test_pool.PoolProcessTests.test_pool_segment_is_unlinked_if_later_pipe_allocation_fails) ... ok
+test_pool_timeout_and_descriptor_cleanup (test_pool.PoolProcessTests.test_pool_timeout_and_descriptor_cleanup) ... ok
+test_production_worker_generates_directly_into_owned_shared_slots (test_pool.PoolProcessTests.test_production_worker_generates_directly_into_owned_shared_slots) ... ok
+test_small_exact_and_partial_windows_in_actual_processes (test_pool.PoolProcessTests.test_small_exact_and_partial_windows_in_actual_processes) ... ok
+test_workers_crashing_with_live_loans_reap_peers_and_unlink (test_pool.PoolProcessTests.test_workers_crashing_with_live_loans_reap_peers_and_unlink) ... Process SpawnProcess-107:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/workspace/tests/test_pool.py", line 176, in marked_producer
+    real_producer(*args)
+  File "/workspace/src/tiny_ipc_lab/experiment.py", line 67, in producer
+    loan, target = sender.acquire(seq)
+                   ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/pool.py", line 64, in acquire
+    self.acknowledge()  # Backpressure: no overwrite, allocation, drop or unbounded queue.
+    ^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/tiny_ipc_lab/pool.py", line 47, in acknowledge
+    raw = self.connection.recv_bytes(RELEASE.size)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+    buf = self._recv(4)
+          ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/multiprocessing/connection.py", line 395, in _recv
+    chunk = read(handle, remaining)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+ok
+test_direct_write_ownership_and_revoke_view_after_publish (test_pool.PoolProtocolTests.test_direct_write_ownership_and_revoke_view_after_publish) ... ok
+test_full_pool_blocks_until_consumer_ack_and_then_reuses_generation (test_pool.PoolProtocolTests.test_full_pool_blocks_until_consumer_ack_and_then_reuses_generation) ... ok
+test_invalid_publication_fields_do_not_ack_or_advance (test_pool.PoolProtocolTests.test_invalid_publication_fields_do_not_ack_or_advance) ... ok
+test_invalid_release_fields_and_duplicate_do_not_return_ownership (test_pool.PoolProtocolTests.test_invalid_release_fields_and_duplicate_do_not_return_ownership) ... ok
+test_receiver_rejects_stale_generation_and_middle_value_corruption (test_pool.PoolProtocolTests.test_receiver_rejects_stale_generation_and_middle_value_corruption) ... ok
+test_stale_release_cannot_free_current_generation (test_pool.PoolProtocolTests.test_stale_release_cannot_free_current_generation) ... ok
+Measuring 64 bytes, 9 messages, pair 1, pipe
+Measuring 64 bytes, 9 messages, pair 1, shared
+Measuring 64 bytes, 9 messages, pair 2, shared
+Measuring 64 bytes, 9 messages, pair 2, pipe
+test_corruption_and_self_consistent_wrong_payload_crc_are_rejected (test_report.EvidenceTests.test_corruption_and_self_consistent_wrong_payload_crc_are_rejected) ... ok
+test_first_trial_failure_leaves_explicit_incomplete_evidence (test_report.EvidenceTests.test_first_trial_failure_leaves_explicit_incomplete_evidence) ... Measuring 64 bytes, 1 messages, pair 1, pipe
+ok
+test_production_benchmark_and_report_reconcile_every_message (test_report.EvidenceTests.test_production_benchmark_and_report_reconcile_every_message) ... ok
+test_report_rejects_forged_metrics_missing_pairs_or_unequal_work (test_report.EvidenceTests.test_report_rejects_forged_metrics_missing_pairs_or_unequal_work) ... ok
+test_hand_calculated_duration_latency_and_simultaneous_rss (test_report.MetricsTests.test_hand_calculated_duration_latency_and_simultaneous_rss) ... ok
+test_paired_ratio_is_not_a_ratio_of_independent_medians (test_report.MetricsTests.test_paired_ratio_is_not_a_ratio_of_independent_medians) ... ok
+test_rejects_missing_repeated_reordered_or_contradictory_records (test_report.MetricsTests.test_rejects_missing_repeated_reordered_or_contradictory_records) ... ok
+test_cleanup_command_timeout_is_failure_and_retained (test_validation.ReviewRegressionTests.test_cleanup_command_timeout_is_failure_and_retained) ... ok
+test_duplicate_fault_lines_cannot_replace_complete_matrix (test_validation.ReviewRegressionTests.test_duplicate_fault_lines_cannot_replace_complete_matrix) ... ok
+test_failed_initial_vm_stop_cannot_start_measurement (test_validation.ReviewRegressionTests.test_failed_initial_vm_stop_cannot_start_measurement) ... ok
+test_failed_remove_and_export_keep_failure_and_still_stop_vm (test_validation.ReviewRegressionTests.test_failed_remove_and_export_keep_failure_and_still_stop_vm) ... ok
+test_final_integrity_failure_rewrites_pass_claim (test_validation.ReviewRegressionTests.test_final_integrity_failure_rewrites_pass_claim) ... ok
+test_hashed_but_semantically_invalid_benchmark_rejected (test_validation.ReviewRegressionTests.test_hashed_but_semantically_invalid_benchmark_rejected) ... ok
+test_html_distinguishes_vm_rss_and_escapes_metadata (test_validation.ReviewRegressionTests.test_html_distinguishes_vm_rss_and_escapes_metadata) ... ok
+test_import_from_outside_snapshot_rejected (test_validation.ReviewRegressionTests.test_import_from_outside_snapshot_rejected) ... ok
+test_install_failure_recorded_not_left_running (test_validation.ReviewRegressionTests.test_install_failure_recorded_not_left_running) ... ok
+test_installed_lima_bytes_checked_not_just_version (test_validation.ReviewRegressionTests.test_installed_lima_bytes_checked_not_just_version) ... ok
+test_same_project_lock_rejects_concurrent_run (test_validation.ReviewRegressionTests.test_same_project_lock_rejects_concurrent_run) ... ok
+test_sigterm_reaps_actual_owned_processes (test_validation.ReviewRegressionTests.test_sigterm_reaps_actual_owned_processes) ... ok
+test_timeout_reaps_descendant_in_new_session (test_validation.ReviewRegressionTests.test_timeout_reaps_descendant_in_new_session) ... ok
+test_actual_nonzero_process_cannot_pass (test_validation.ValidationTests.test_actual_nonzero_process_cannot_pass) ... ok
+test_actual_timeout_cannot_pass (test_validation.ValidationTests.test_actual_timeout_cannot_pass) ... ok
+test_claimed_pass_with_missing_steps_rejected (test_validation.ValidationTests.test_claimed_pass_with_missing_steps_rejected) ... ok
+test_production_commands_same_for_full_and_smoke (test_validation.ValidationTests.test_production_commands_same_for_full_and_smoke) ... ok
+test_tampered_log_rejected_before_claimed_test_results (test_validation.ValidationTests.test_tampered_log_rejected_before_claimed_test_results) ... ok
+
+----------------------------------------------------------------------
+Ran 59 tests in 24.368s
+
+OK

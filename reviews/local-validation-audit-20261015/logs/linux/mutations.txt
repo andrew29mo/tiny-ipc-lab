@@ -1,0 +1,11 @@
+Detected: skip_shared_copy
+Detected: stale_sequence
+Detected: reuse_before_ack
+Detected: skip_full_tensor_validation
+Detected: trust_wrong_ack
+Detected: pool_reuse_before_ack
+Detected: pool_ignore_release_generation
+Detected: pool_ignore_publication_generation
+Detected: pool_skip_full_validation
+Detected: worker_staging_copy_instead_of_inplace
+All ten source faults detected by behavioral assertions.

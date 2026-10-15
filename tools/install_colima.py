@@ -20,6 +20,22 @@ def digest(path):
     return h.hexdigest()
 
 
+def verified_lima_files(archive, root):
+    with tarfile.open(archive) as stream:
+        for member in stream.getmembers():
+            target = root / member.name
+            if member.issym():
+                if not target.is_symlink() or os.readlink(target) != member.linkname:
+                    return False
+            elif member.isfile():
+                if target.is_symlink() or not target.is_file():
+                    return False
+                expected = hashlib.sha256(stream.extractfile(member).read()).hexdigest()
+                if digest(target) != expected:
+                    return False
+    return True
+
+
 def install(root=ROOT):
     if platform.system() != 'Darwin':
         raise RuntimeError('Colima host setup requires macOS')
@@ -43,7 +59,7 @@ def install(root=ROOT):
             if not target.exists() or digest(target) != asset['sha256']:
                 shutil.copyfile(archive, target)
                 target.chmod(0o755)
-        elif not (binaries / 'limactl').exists():
+        elif not verified_lima_files(archive, toolchain):
             with tarfile.open(archive) as stream:
                 stream.extractall(toolchain, filter='data')
     docker = shutil.which('docker') or '/Applications/Docker.app/Contents/Resources/bin/docker'
@@ -67,7 +83,7 @@ def install(root=ROOT):
                        DOCKER_HOST='unix://' + str(colima_home / 'ipc/docker.sock'))
     environment.pop('DOCKER_CONTEXT', None)
     for binary, expected in [('colima', lock['colima_version']), ('limactl', lock['lima_version'])]:
-        output = subprocess.check_output([str(binaries / binary), 'version' if binary == 'colima' else '--version'], env=environment, text=True)
+        output = subprocess.check_output([str(binaries / binary), 'version' if binary == 'colima' else '--version'], env=environment, text=True, timeout=30)
         if expected not in output:
             raise RuntimeError('Installed binary version differs: ' + binary)
     return binaries, environment

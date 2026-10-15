@@ -1,0 +1,9 @@
+{
+  "original_commit": "bebce249de879c2c41093a10def26b235d267b8a",
+  "original_tool_sha256": "11288469b90eb9372fcd25aacfd153881c6976afb3e06c62cbd4117cbdc4dd79",
+  "purpose": "Counterexample for original timeout process-group cleanup; not a benchmark",
+  "original_status": "timeout",
+  "original_exit_code": -15,
+  "escaped_descendant_was_live": true,
+  "manual_cleanup_completed": true
+}

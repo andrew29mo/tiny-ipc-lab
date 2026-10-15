@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "purpose": "Actual Docker timeout / owned-container cleanup fault probe; not a measurement run",
+  "status": "passed",
+  "operations": {
+    "initial-stop-before": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.18593024997971952,
+      "log": "initial-stop-before.log",
+      "log_sha256": "1503af023c7896d467364d8f850cf0afd7fedaaf4e0e3a60a877689bd0eaf7d0"
+    },
+    "initial-stop-after": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.18398629099829122,
+      "log": "initial-stop-after.log",
+      "log_sha256": "1503af023c7896d467364d8f850cf0afd7fedaaf4e0e3a60a877689bd0eaf7d0"
+    },
+    "vm-start": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 9.171857082983479,
+      "log": "vm-start.log",
+      "log_sha256": "880df7a5d43079d0ed5fdd2cd13bca4aaf8c94ca7e8801f60cdcea4adde227ab"
+    },
+    "create": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.03628845899947919,
+      "log": "create.log",
+      "log_sha256": "8714d279e4664247910d8f513fcb9443fe2eea0f86f4a0431149e9ebdc7d3bb9"
+    },
+    "attach-timeout": {
+      "status": "timeout",
+      "exit_code": 0,
+      "elapsed_s": 1.0179840000055265,
+      "log": "attach-timeout.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sanitized_log": "logs/cleanup-probe/attach-timeout.txt",
+      "sanitized_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "still-running": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.018814499984728172,
+      "log": "still-running.log",
+      "log_sha256": "a651b09c26c989e6978c36714084f93acf9a3bf53fe4b9a36ff22eba00aa7adc"
+    },
+    "cleanup-owned": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.018954666011268273,
+      "log": "cleanup-owned.log",
+      "log_sha256": "8ba8fc55c2abc6802557b0b394b13eb76f0a005f1d1db720427960f6cc073544"
+    },
+    "cleanup-state": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.0199125419894699,
+      "log": "cleanup-state.log",
+      "log_sha256": "a651b09c26c989e6978c36714084f93acf9a3bf53fe4b9a36ff22eba00aa7adc"
+    },
+    "cleanup-kill": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.07221362501149997,
+      "log": "cleanup-kill.log",
+      "log_sha256": "8ba8fc55c2abc6802557b0b394b13eb76f0a005f1d1db720427960f6cc073544",
+      "sanitized_log": "logs/cleanup-probe/cleanup-kill.txt",
+      "sanitized_log_sha256": "8ba8fc55c2abc6802557b0b394b13eb76f0a005f1d1db720427960f6cc073544"
+    },
+    "cleanup-export": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.03821808300563134,
+      "log": "cleanup-export.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sanitized_log": "logs/cleanup-probe/cleanup-export.txt",
+      "sanitized_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cleanup-remove": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.018470457987859845,
+      "log": "cleanup-remove.log",
+      "log_sha256": "8ba8fc55c2abc6802557b0b394b13eb76f0a005f1d1db720427960f6cc073544",
+      "sanitized_log": "logs/cleanup-probe/cleanup-remove.txt",
+      "sanitized_log_sha256": "8ba8fc55c2abc6802557b0b394b13eb76f0a005f1d1db720427960f6cc073544"
+    },
+    "cleanup-remaining": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.019782374991336837,
+      "log": "cleanup-remaining.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sanitized_log": "logs/cleanup-probe/cleanup-remaining.txt",
+      "sanitized_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cleanup-vm-stop-before": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.23302412501652725,
+      "log": "cleanup-vm-stop-before.log",
+      "log_sha256": "bf2663c2cebaae29e5d222415f1069ebc91d51edbe175a45cb8bdf1f394ae214"
+    },
+    "cleanup-vm-stop": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 2.202379042020766,
+      "log": "cleanup-vm-stop.log",
+      "log_sha256": "f0575d7ab792d957a5a7ad8135277600d6c7a826fe8bdc6f90fd65c1be9a4c4a",
+      "sanitized_log": "logs/cleanup-probe/cleanup-vm-stop.txt",
+      "sanitized_log_sha256": "28107120ae275dc8823351328fcbd93d7f59c06842ac3461e5d5c3a74770f53a"
+    },
+    "cleanup-vm-stop-after": {
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_s": 0.23372120800195262,
+      "log": "cleanup-vm-stop-after.log",
+      "log_sha256": "1503af023c7896d467364d8f850cf0afd7fedaaf4e0e3a60a877689bd0eaf7d0",
+      "sanitized_log": "logs/cleanup-probe/cleanup-vm-stop-after.txt",
+      "sanitized_log_sha256": "1503af023c7896d467364d8f850cf0afd7fedaaf4e0e3a60a877689bd0eaf7d0"
+    }
+  },
+  "tested_helpers": {
+    "tools/validate_local.py": "bb8a45480fbaa0e5913db6e1a5361139ae16a960c38415549de011d2b46628f2",
+    "tools/validation_process.py": "249fde7ab055be7cc41599e8073192091a27d4da19c6dbc765906695245d364d"
+  },
+  "expected_attach_timeout": true,
+  "container_running_after_client_timeout": true,
+  "cleanup": {
+    "container": "removed",
+    "vm": "stopped",
+    "errors": [],
+    "evidence_copied": true,
+    "container_id": "b6a3e634376c"
+  },
+  "retained_marker": {
+    "probe": "owned-cleanup",
+    "sequence": 1
+  },
+  "run_id": "20261015T131508Z",
+  "scope": "Actual timeout/cleanup fault probe. Setup/inspection logs remain local; selected sanitized cleanup logs are published. This is not a throughput or RSS trial."
+}

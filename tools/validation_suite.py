@@ -3,14 +3,11 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
-import os
 from pathlib import Path
 import platform
 import re
-import signal
 import subprocess
 import sys
-import time
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,31 +26,30 @@ def save(path, value):
     temporary.replace(path)
 
 
-def execute(command, logfile, *, timeout=900, cwd=ROOT):
-    start = time.monotonic()
-    status = 'passed'
-    with Path(logfile).open('wb') as log:
-        child = subprocess.Popen(command, cwd=cwd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-        try:
-            code = child.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            status = 'timeout'
-            os.killpg(child.pid, signal.SIGTERM)
-            try:
-                child.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                os.killpg(child.pid, signal.SIGKILL)
-                child.wait()
-            # Descendants may outlive a parent which exits promptly on TERM.
-            try:
-                os.killpg(child.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            code = child.returncode
-        if code != 0 and status == 'passed':
-            status = 'failed'
-    return dict(status=status, exit_code=code, elapsed_s=time.monotonic()-start,
-                log=Path(logfile).name, log_sha256=sha(logfile))
+from validation_process import execute, cancellation_signals
+
+
+def normalize_command(command, output):
+    return ['<python>' if i == 0 else str(value).replace(str(output), '<evidence>')
+            for i, value in enumerate(command)]
+
+
+def implementation(files):
+    import importlib
+    package = importlib.import_module('tiny_ipc_lab')
+    expected = (ROOT / 'src/tiny_ipc_lab').resolve()
+    if Path(package.__file__).resolve().parent != expected:
+        raise ValueError('Imported production package is outside the snapshot')
+    bound = {name: digest for name, digest in files.items() if name.startswith('src/tiny_ipc_lab/') and name.endswith('.py')}
+    actual = {str(path.relative_to(ROOT)): sha(path) for path in expected.glob('*.py')}
+    if not actual or actual != bound:
+        raise ValueError('Imported production files differ from tracked snapshot')
+    for path in expected.glob('*.py'):
+        name = 'tiny_ipc_lab' + ('' if path.stem == '__init__' else '.' + path.stem)
+        module = importlib.import_module(name)
+        if Path(module.__file__).resolve() != path.resolve():
+            raise ValueError('Imported production module is outside the snapshot')
+    return actual
 
 
 def plan(output, benchmark):
@@ -77,8 +73,17 @@ def plan(output, benchmark):
     return steps
 
 
+def behavioral_faults(text):
+    from run_mutations import MUTATIONS, POOL_MUTATIONS, WORKER_MUTATIONS
+    expected = [item[0] for item in MUTATIONS + POOL_MUTATIONS + WORKER_MUTATIONS]
+    actual = re.findall(r'^Detected: (\S+)\s*$', text, re.M)
+    if actual != expected:
+        raise ValueError('Behavioral source faults differ from the complete matrix')
+    return actual
+
+
 def tracked_files():
-    names = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
+    names = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT, timeout=30).decode().split('\0')
     return {name: sha(ROOT / name) for name in names if name}
 
 
@@ -92,15 +97,16 @@ def run(output, environment, benchmark):
     import psutil
     if sys.version_info[:2] != (3, 12) or numpy.__version__ != '1.26.4' or psutil.__version__ != '7.0.0':
         raise RuntimeError('Production tests require Python 3.12, NumPy 1.26.4 and psutil 7.0.0')
-    report = dict(schema_version=1, environment=environment, benchmark_kind=benchmark,
+    report = dict(schema_version=2, environment=environment, benchmark_kind=benchmark,
                   generated_utc=datetime.now(timezone.utc).isoformat(), source_sha256=source_hash(),
                   host=dict(os=platform.system(), release=platform.release(), machine=platform.machine(), python=platform.python_version()),
                   versions=dict(numpy=numpy.__version__, psutil=psutil.__version__), status='running', steps=[], source_files=tracked_files())
+    report['implementation_files'] = implementation(report['source_files'])
     save(output / 'validation.json', report)
     expected_steps = plan(output, benchmark)
     for name, command in expected_steps:
         print(f'[{environment}] {name}', flush=True)
-        step = dict(name=name, **execute(command, output / (name + '.log')))
+        step = dict(name=name, command=normalize_command(command, output), **execute(command, output / (name + '.log'), cwd=ROOT))
         if step['status'] == 'passed' and name in ('tests', 'optimized'):
             text = (output / step['log']).read_text()
             found = re.search(r'Ran (\d+) tests? in ', text)
@@ -108,8 +114,13 @@ def run(output, environment, benchmark):
                 step['status'] = 'invalid-test-result'
             else:
                 step['tests_run'] = int(found.group(1))
+                if name == 'tests':
+                    step['test_ids'] = re.findall(r'^test\S+ \(([^)]+)\) \.\.\.', text, re.M)
+                    if len(step['test_ids']) != step['tests_run'] or len(set(step['test_ids'])) != step['tests_run']:
+                        step['status'] = 'invalid-test-identities'
         if step['status'] == 'passed' and name == 'mutations':
-            step['faults_detected'] = len(re.findall(r'^Detected:', (output / step['log']).read_text(), re.M))
+            step['fault_ids'] = behavioral_faults((output / step['log']).read_text())
+            step['faults_detected'] = len(step['fault_ids'])
             if step['faults_detected'] != 10:
                 step['status'] = 'invalid-mutation-result'
         report['steps'].append(step)
@@ -118,7 +129,7 @@ def run(output, environment, benchmark):
             report['status'] = 'failed'
             break
     else:
-        if source_hash() != report['source_sha256'] or tracked_files() != report['source_files']:
+        if source_hash() != report['source_sha256'] or tracked_files() != report['source_files'] or implementation(report['source_files']) != report['implementation_files']:
             report['status'] = 'source-changed'
         else:
             report['status'] = 'passed'
@@ -128,7 +139,7 @@ def run(output, environment, benchmark):
                                      trials=sum(len(c['runs']) for c in measured['cases']),
                                      messages=sum(r['summary']['verified_messages'] for c in measured['cases'] for r in c['runs']))
     report['artifacts'] = {str(path.relative_to(output)): sha(path) for path in sorted(output.rglob('*'))
-                           if path.is_file() and path.name != 'validation.json'}
+                           if path.is_file() and path != output / 'validation.json'}
     save(output / 'validation.json', report)
     if report['status'] != 'passed':
         raise RuntimeError('Validation did not pass; retained step log identifies the failure')
@@ -141,4 +152,14 @@ if __name__ == '__main__':
     parser.add_argument('--environment', choices=('native-macos', 'colima-linux', 'github-hosted'), required=True)
     parser.add_argument('--benchmark', choices=('full', 'smoke'), default='full')
     args = parser.parse_args()
-    run(args.output, args.environment, args.benchmark)
+    with cancellation_signals():
+        try:
+            run(args.output, args.environment, args.benchmark)
+        except BaseException as error:
+            path = args.output / 'validation.json'
+            state = json.loads(path.read_text()) if path.exists() else dict(schema_version=2)
+            if state.get('status') not in ('failed', 'source-changed'):
+                state.update(status='failed', error_type=type(error).__name__)
+                args.output.mkdir(parents=True, exist_ok=True)
+                save(path, state)
+            raise

@@ -137,3 +137,12 @@ and [virtualized Linux measurements](reviews/local-validation-20261015/linux-mea
 are separate observations; worker RSS excludes VM/daemon overhead. The compact
 record includes sanitized logs and derived observations; full raw JSON/HTML and
 original logs remain local. This is not a GitHub-hosted CI success or x86_64 validation.
+
+The [reviewed schema-2 validation](reviews/local-validation-audit-20261015/README.md)
+adds import-origin binding, executed test IDs/commands, bounded cancellation and
+owned-resource cleanup, plus a labelled `validation.html` entry point. Native
+macOS ARM64 and Colima Linux ARM64 each passed 59 normal and 59 optimized tests,
+ten source faults and the full 200-trial / 654,450-exchange grid. An additional
+real Docker client-timeout probe verified evidence recovery, container removal
+and VM shutdown. These new observations remain separate from the native primary
+run above; no cross-environment speedup or whole-VM memory saving is inferred.

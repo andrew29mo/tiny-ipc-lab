@@ -1,0 +1,2 @@
+Verified every sequence/value CRC, timing/RSS statistic, clean exit, fair workload and canonical JSON/HTML/README.
+Original 200 trials, all-five-block ratios and FIFO ACK chronology verified.

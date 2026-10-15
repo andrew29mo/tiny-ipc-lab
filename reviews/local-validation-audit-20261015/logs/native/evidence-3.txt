@@ -1,0 +1,3 @@
+Verified every sequence/value CRC, timing/RSS statistic, clean exit, fair workload and canonical JSON/HTML/README.
+Historical data verified using immutable c91bfef source; not measurements of the current timing implementation.
+Tracked files: no targeted personal/secret/generated patterns or broken Markdown links.
