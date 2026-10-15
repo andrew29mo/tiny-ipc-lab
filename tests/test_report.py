@@ -27,14 +27,14 @@ class MetricsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             comparisons(report)
     def fixture(self):
-        return {"mode": "shared", "pipe_receive": "into", "payload_bytes": 4, "count": 2, "warmup": 8,
+        return {"mode": "shared", "pipe_receive": "into", "payload_bytes": 4, "count": 2, "warmup": 8, "timing_version": 2, "consumer_delay_s": 0.,
                 "producer": {"event": "done", "start_s": 1., "end_s": 1.006, "cpu_s": .001,
                              "high_water_rss_bytes": 100,
                              "records": [{"sequence": 8, "start_s": 1., "end_s": 1.002, "input_crc32": 1, "ack_crc32": 1},
                                          {"sequence": 9, "start_s": 1.003, "end_s": 1.006, "input_crc32": 2, "ack_crc32": 2}]},
                 "consumer": {"event": "done", "end_s": 1.007, "cpu_s": .002, "high_water_rss_bytes": 200,
-                             "records": [{"sequence": 8, "crc32": 1, "verified_elements": 1},
-                                         {"sequence": 9, "crc32": 2, "verified_elements": 1}]},
+                             "records": [{"sequence": 8, "crc32": 1, "verified_elements": 1, "delay_start_s": 1.0014, "ready_s": 1.0015},
+                                         {"sequence": 9, "crc32": 2, "verified_elements": 1, "delay_start_s": 1.0049, "ready_s": 1.005}]},
                 "memory_window": {"start_s": .99, "end_s": 1.02},
                 "rss_samples": [{"start_s": .991, "end_s": .992, "producer_rss_bytes": 100, "consumer_rss_bytes": 10},
                                 {"start_s": 1.008, "end_s": 1.009, "producer_rss_bytes": 10, "consumer_rss_bytes": 100}],

@@ -22,10 +22,10 @@ def findings(report):
     values = []
     for profile in ['shared', 'pool_n']:
         stats = [r['summary'] for r in case['runs'] if r['profile'] == profile]
-        values.append((median(s['round_trip_ms']['p95'] for s in stats), max(s['peak_paired_rss_bytes'] for s in stats)/1048576))
+        values.append((median(s['round_trip_ms']['p95'] for s in stats), max(s['peak_paired_rss_bytes'] for s in stats)/1048576, median(s['admitted_to_ready_ms']['p95'] for s in stats), median(s['ack_observation_lag_ms']['p95'] for s in stats)))
     lines += ['', 'Ratios are medians [observed min, max] of all five within-block throughput ratios, not confidence intervals or ratios of table medians.', '',
-              f'At 1 MiB normal load, copied single-buffer versus pool-4 median per-trial p95 completion latency is **{values[0][0]:.3f} vs {values[1][0]:.3f} ms**; maximum sampled paired RSS is **{values[0][1]:.2f} vs {values[1][1]:.2f} MiB**. Throughput gains can trade off latency and resident memory. These RSS maxima are not paired physical-memory savings.', '',
-              'A development run overlapped local tests near its end. It is [retained separately](results/macos-arm64-pool-development/README.md) and excluded from primary findings because of known interference, not a performance threshold. The full primary grid was then executed once without concurrent test/validation processes launched by this task; OS/desktop interference remains uncontrolled.', END]
+              f'At 1 MiB normal load, copied single-buffer versus pool-4 median per-trial p95 producer ACK-observed latency is **{values[0][0]:.3f} vs {values[1][0]:.3f} ms** (includes admission waiting and deferred ACK collection); admitted-to-consumer-ready p95 is **{values[0][2]:.3f} vs {values[1][2]:.3f} ms**, and ACK-observation-lag p95 is **{values[0][3]:.3f} vs {values[1][3]:.3f} ms**. Maximum sampled paired RSS is **{values[0][1]:.2f} vs {values[1][1]:.2f} MiB**. Throughput gains can trade off latency and resident memory. These RSS maxima are not paired physical-memory savings.', '',
+              'These are fresh schema-4 observations with separate consumer-ready clocks. The original schema-3 run and its development run remain historical evidence, verified from immutable source. The full reviewed grid was executed once without concurrent test/validation processes launched by this task; OS/desktop interference remains uncontrolled.', END]
     return '\n'.join(lines)
 
 
@@ -37,5 +37,5 @@ def check(report):
 
 
 if __name__ == '__main__':
-    report = json.loads((ROOT / 'results/macos-arm64-pool/report.json').read_text())
+    report = json.loads((ROOT / 'results/macos-arm64-pool-reviewed/report.json').read_text())
     print(findings(report))

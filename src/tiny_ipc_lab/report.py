@@ -64,11 +64,19 @@ def summarize(run, *, check_values=True):
     need(type(capacity) is int and 1 <= capacity <= 16 and (streaming or capacity == 1), "Invalid capacity")
     slot_ends, events = {}, []
     latencies = []
+    admitted_ready, attempt_ready, ack_lag, admission_wait = [], [], [], []
+    previous_ack = previous_ready = producer["start_s"]
+    detailed_timing = run.get("timing_version") == 2
+    need(detailed_timing, "Current records require consumer-ready timing version 2")
+    if detailed_timing:
+        need(finite(run["consumer_delay_s"]) and 0 <= run["consumer_delay_s"] <= .05, "Invalid measured delay")
     for sent, got in zip(rows, received):
         need(finite(sent["start_s"]) and finite(sent["end_s"])
              and previous <= sent["start_s"] < sent["end_s"] <= producer["end_s"], "Invalid round-trip chronology")
         previous = sent["published_s"] if streaming else sent["end_s"]
         if streaming:
+            need(previous_ack <= sent["end_s"], "Out-of-order FIFO ACK observation")
+            previous_ack = sent["end_s"]
             slot, generation = sent["sequence"] % capacity, sent["sequence"] // capacity + 1
             need(sent["slot"] == got["slot"] == slot and sent["generation"] == got["generation"] == generation, "Slot/generation differs")
             need(finite(sent["acquired_s"]) and finite(sent["published_s"])
@@ -83,6 +91,18 @@ def summarize(run, *, check_values=True):
         need(type(expected_crc) is int and 0 <= expected_crc <= 0xffffffff
              and sent["input_crc32"] == sent["ack_crc32"] == got["crc32"] == expected_crc
              and got["verified_elements"] == size // 4, "Payload or validation accounting differs")
+        if detailed_timing:
+            admitted = sent["acquired_s"] if streaming else sent["start_s"]
+            ready, delay_start = got["ready_s"], got["delay_start_s"]
+            need(finite(ready) and finite(delay_start)
+                 and admitted <= delay_start <= ready <= sent["end_s"]
+                 and previous_ready <= ready <= consumer["end_s"], "Invalid consumer-ready/ACK chronology")
+            need(ready - delay_start + 1e-6 >= run["consumer_delay_s"], "Requested consumer delay was not executed")
+            previous_ready = ready
+            admitted_ready.append((ready - admitted) * 1000)
+            attempt_ready.append((ready - sent["start_s"]) * 1000)
+            ack_lag.append((sent["end_s"] - ready) * 1000)
+            admission_wait.append((admitted - sent["start_s"]) * 1000)
         latencies.append((sent["end_s"] - sent["start_s"]) * 1000)
     # The consumer's last bookkeeping can finish just after its ACK was received.
     end = max(producer["end_s"], consumer["end_s"])
@@ -116,6 +136,11 @@ def summarize(run, *, check_values=True):
             "peak_paired_rss_bytes": max(sums), "rss_sample_count": len(samples),
             "max_rss_gap_ms": max(gaps) * 1000,
             "max_paired_read_ms": max(s["end_s"] - s["start_s"] for s in samples) * 1000}
+    if detailed_timing:
+        result.update(admitted_to_ready_ms=distribution(admitted_ready),
+                      attempt_to_ready_ms=distribution(attempt_ready),
+                      ack_observation_lag_ms=distribution(ack_lag),
+                      admission_wait_ms=distribution(admission_wait))
     if streaming:
         outstanding = peak = 0
         for _, delta in sorted(events):

@@ -38,6 +38,12 @@ def transport(mode, size=64, pipe_receive="into"):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_legacy_protocol_rejects_pool_modes_instead_of_silently_skipping_payload(self):
+        for mode in ('pool', 'window_pipe'):
+            for cls in (Sender, Receiver):
+                with self.assertRaises(ValueError):
+                    cls(None, mode, 64)
+
     def test_bytes_receive_api_checks_complete_tensor_and_short_payload(self):
         for corrupt in (False, True):
             with transport("pipe", pipe_receive="bytes") as (left, _, _, _, receiver):

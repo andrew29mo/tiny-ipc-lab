@@ -28,23 +28,23 @@ python -m tiny_ipc_lab.pool_bench --output results/local/pool-smoke --sizes 64 4
 python tools/check_project.py --directory results/local/pool-smoke --smoke
 ```
 
-[Current pool JSON/HTML and raw evidence](results/macos-arm64-pool/README.md) retain every block. See the [pool ownership, fairness and measurement contract](docs/POOL.md). These are closed-loop verified exchanges, not a shared external arrival schedule or pure transport bandwidth. Per-message completion latency includes loan waiting and producer ACK collection; a larger window can improve throughput while worsening completion latency. Payload slots are bounded, while evidence records still grow with the finite message count.
+[Current reviewed pool JSON/HTML and raw evidence](results/macos-arm64-pool-reviewed/README.md) retain every block. See the [pool ownership, fairness and measurement contract](docs/POOL.md). These are closed-loop verified exchanges, not a shared external arrival schedule or pure transport bandwidth. Producer ACK-observed latency includes loan waiting and deferred ACK collection; consumer-ready timing is reported separately and can rank profiles differently; a larger window can improve throughput while worsening completion latency. Payload slots are bounded, while evidence records still grow with the finite message count.
 
 <!-- POOL_RESULTS_START -->
 The primary run retains **200 trials and 654,450 verified tensors** across six normal sizes and two slow-consumer cases. Five rotating blocks include every profile at every order position.
 
 | Case | Pool 4 / copied single buffer | Pool 4 / equal-window Pipe |
 |---|---:|---:|
-| 64 B, normal | 2.096 [1.240, 2.634] | 1.020 [0.745, 1.429] |
-| 1 MiB, normal | 2.309 [1.341, 3.489] | 8.399 [5.881, 8.518] |
-| 4 MiB, normal | 1.483 [0.833, 2.381] | 5.921 [3.527, 9.319] |
-| 1 MiB, 1 ms delayed ACK | 1.086 [1.074, 1.405] | 1.678 [1.606, 1.734] |
+| 64 B, normal | 1.810 [1.335, 3.212] | 1.314 [0.766, 1.621] |
+| 1 MiB, normal | 1.921 [1.836, 3.350] | 7.303 [6.399, 8.507] |
+| 4 MiB, normal | 1.524 [0.845, 2.670] | 5.962 [3.245, 8.796] |
+| 1 MiB, 1 ms delayed ACK | 1.088 [0.951, 1.269] | 1.591 [1.461, 1.689] |
 
 Ratios are medians [observed min, max] of all five within-block throughput ratios, not confidence intervals or ratios of table medians.
 
-At 1 MiB normal load, copied single-buffer versus pool-4 median per-trial p95 completion latency is **0.374 vs 0.699 ms**; maximum sampled paired RSS is **84.28 vs 89.39 MiB**. Throughput gains can trade off latency and resident memory. These RSS maxima are not paired physical-memory savings.
+At 1 MiB normal load, copied single-buffer versus pool-4 median per-trial p95 producer ACK-observed latency is **0.390 vs 1.121 ms** (includes admission waiting and deferred ACK collection); admitted-to-consumer-ready p95 is **0.359 vs 0.857 ms**, and ACK-observation-lag p95 is **0.028 vs 0.177 ms**. Maximum sampled paired RSS is **84.55 vs 89.67 MiB**. Throughput gains can trade off latency and resident memory. These RSS maxima are not paired physical-memory savings.
 
-A development run overlapped local tests near its end. It is [retained separately](results/macos-arm64-pool-development/README.md) and excluded from primary findings because of known interference, not a performance threshold. The full primary grid was then executed once without concurrent test/validation processes launched by this task; OS/desktop interference remains uncontrolled.
+These are fresh schema-4 observations with separate consumer-ready clocks. The original schema-3 run and its development run remain historical evidence, verified from immutable source. The full reviewed grid was executed once without concurrent test/validation processes launched by this task; OS/desktop interference remains uncontrolled.
 <!-- POOL_RESULTS_END -->
 
 ## Run
@@ -71,6 +71,8 @@ python tools/check_project.py --directory results/local/smoke --smoke
 ```
 
 Output directories must be new. Completed raw trials survive a later failure; an incomplete index and supervised-failure cleanup metadata are retained, without inventing the failed trial's missing observations. Custom sizes/counts are explicitly recorded; they are not the retained full-grid experiment.
+
+The original pool extension at `d0ba9c0` observed **2.309×** versus the copied single buffer and **8.399×** versus equal-window Pipe at 1 MiB. [The review](reviews/pool-review.md) reopens all 200 original trials and independently rebuilds throughput, p95 and RSS. Those historical ratios remain descriptive observations; they are not relabeled as results of the new timing instrumentation. Original “completion latency” ended at producer ACK observation and did not directly measure consumer completion.
 
 ## Historical measurements and limits
 
@@ -100,14 +102,16 @@ These are warm, finite, single-host observations with fixed size order, uncontro
 python -m unittest discover -s tests -v
 python -O -m unittest discover -s tests
 python tools/run_mutations.py
+python tools/check_project.py --directory results/macos-arm64-pool-reviewed
 python tools/check_project.py --directory results/macos-arm64-pool
 python tools/check_project.py
 python tools/check_project.py --directory results/macos-arm64-pipe-bytes
 python tools/diagnose_rss.py --verify
 python tools/audit_original.py --verify
+python tools/audit_pool_original.py --verify
 ```
 
-Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Nine deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. Linux/macOS CI also executes real-process smoke measurements; their timings are not performance gates.
+Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Ten deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. Linux/macOS CI also executes real-process smoke measurements; their timings are not performance gates.
 
 Historical verification needs full Git history. The diagnostic verifier checks retained controls rather than rerunning instrumented probes in CI. Both public receive API profiles and the five-profile pool comparison get actual-process smoke tests in CI.
 

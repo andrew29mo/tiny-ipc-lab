@@ -11,7 +11,7 @@ from tiny_ipc_lab.cli import DEFAULT_SIZES
 from tiny_ipc_lab.report import verify, render, overview
 from tiny_ipc_lab.experiment import source_hash
 from tiny_ipc_lab import pool_bench
-from verify_legacy import verify_legacy, SOURCE
+from verify_legacy import verify_legacy, SOURCE, POOL_SOURCE, POOL_REVISION
 from pool_findings import check as check_findings
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,10 +23,13 @@ def check(directory, smoke=False):
     if report["schema_version"] == 2 and report["source_sha256"] == SOURCE and report["source_sha256"] != source_hash():
         verify_legacy(directory)
         return
-    if report["schema_version"] == 3:
+    if report["schema_version"] == 3 and report["source_sha256"] == POOL_SOURCE:
+        verify_legacy(directory, POOL_REVISION)
+        return
+    if report["schema_version"] == 4:
         pool_bench.verify(report, directory)
         canonical_html, canonical_readme = pool_bench.render(report), pool_bench.overview(report)
-        if directory.resolve() == ROOT / "results/macos-arm64-pool":
+        if directory.resolve() == ROOT / "results/macos-arm64-pool-reviewed":
             check_findings(report)
         if not smoke and (report["blocks"] != 5 or report["smoke"] or report["pool_capacity"] != 4
                           or [c["payload_bytes"] for c in report["cases"] if c["consumer_delay_s"] == 0.] != DEFAULT_SIZES):
@@ -55,7 +58,7 @@ def publication():
             raise ValueError("Private or linked file: " + name)
         data = path.read_bytes()
         if name.endswith(".gz"):
-            if not re.fullmatch(r"results/(?:macos-arm64(?:-pipe-bytes)?/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)|macos-arm64-pool(?:-development)?/raw/case-[0-9]+-block-[0-9]+-(?:pipe|shared|pool_1|pool_n|window_pipe))\.json\.gz", name):
+            if not re.fullmatch(r"results/(?:macos-arm64(?:-pipe-bytes)?/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)|macos-arm64-pool(?:-development|-reviewed)?/raw/case-[0-9]+-block-[0-9]+-(?:pipe|shared|pool_1|pool_n|window_pipe))\.json\.gz", name):
                 raise ValueError("Unexpected compressed file")
             data = gzip.decompress(data)
         if b"\0" in data or private.search(data) or secret.search(data):

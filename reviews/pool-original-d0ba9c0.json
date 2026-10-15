@@ -1,0 +1,239 @@
+{
+  "original_commit": "d0ba9c0053467d00dd55449c00a4e87c1632e601",
+  "original_report_sha256": "17c25ce778fd7e8cd9aa9de253f2d5d30f1af47f6c444e597ca08f7f9cc710f6",
+  "source_sha256": "a789b12567f25948a2f64e340ec29de7ee79980dda70ab995d4ba7807898997d",
+  "verified_trials": 200,
+  "verified_messages": 654450,
+  "additionally_checked_fifo_messages": 392670,
+  "independently_rebuilt_resource_trials": 200,
+  "largest_recorded_rss_gap_ms": 20.003874989924952,
+  "synthetic_counterexample_old_accepted": true,
+  "synthetic_counterexample_current_rejected_for_fifo": true,
+  "comparisons": [
+    {
+      "case": "normal-64",
+      "denominator": "shared",
+      "all_block_ratios": [
+        2.633780505835609,
+        2.105736776530573,
+        1.6751511939674002,
+        2.096064332336573,
+        1.2398141224163752
+      ],
+      "median": 2.096064332336573,
+      "min": 1.2398141224163752,
+      "max": 2.633780505835609
+    },
+    {
+      "case": "normal-64",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        1.0196848236378717,
+        1.1042496248926352,
+        0.8691199840618242,
+        1.4292669918098597,
+        0.7453801834112009
+      ],
+      "median": 1.0196848236378717,
+      "min": 0.7453801834112009,
+      "max": 1.4292669918098597
+    },
+    {
+      "case": "normal-1024",
+      "denominator": "shared",
+      "all_block_ratios": [
+        2.3033806535028387,
+        1.3287005719678384,
+        2.354505101860513,
+        2.2609560757226084,
+        2.21588379006909
+      ],
+      "median": 2.2609560757226084,
+      "min": 1.3287005719678384,
+      "max": 2.354505101860513
+    },
+    {
+      "case": "normal-1024",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        1.3010721247635788,
+        0.9678729758393256,
+        1.623969654316932,
+        1.2823581145155185,
+        1.6033143766023525
+      ],
+      "median": 1.3010721247635788,
+      "min": 0.9678729758393256,
+      "max": 1.623969654316932
+    },
+    {
+      "case": "normal-16384",
+      "denominator": "shared",
+      "all_block_ratios": [
+        2.5263146954050417,
+        2.2287203490825025,
+        1.7286337383544481,
+        1.2967364241254984,
+        1.516950275972894
+      ],
+      "median": 1.7286337383544481,
+      "min": 1.2967364241254984,
+      "max": 2.5263146954050417
+    },
+    {
+      "case": "normal-16384",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        2.598361766654552,
+        3.2205241707279924,
+        2.356191980300266,
+        2.0098004632046513,
+        2.597648656182443
+      ],
+      "median": 2.597648656182443,
+      "min": 2.0098004632046513,
+      "max": 3.2205241707279924
+    },
+    {
+      "case": "normal-262144",
+      "denominator": "shared",
+      "all_block_ratios": [
+        1.3974403414630374,
+        1.3501776952717315,
+        1.9428501991788423,
+        1.9862036889143666,
+        2.398278974646668
+      ],
+      "median": 1.9428501991788423,
+      "min": 1.3501776952717315,
+      "max": 2.398278974646668
+    },
+    {
+      "case": "normal-262144",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        4.414513866025787,
+        4.370570453317341,
+        5.601099983460678,
+        5.3028783919218965,
+        7.0252000782846284
+      ],
+      "median": 5.3028783919218965,
+      "min": 4.370570453317341,
+      "max": 7.0252000782846284
+    },
+    {
+      "case": "normal-1048576",
+      "denominator": "shared",
+      "all_block_ratios": [
+        1.3407364089173994,
+        2.309366730295357,
+        3.488622719939387,
+        3.3517984490567656,
+        1.89202672369653
+      ],
+      "median": 2.309366730295357,
+      "min": 1.3407364089173994,
+      "max": 3.488622719939387
+    },
+    {
+      "case": "normal-1048576",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        5.881343777386186,
+        8.134180516134645,
+        8.39944455068625,
+        8.517971601885373,
+        8.421536223428687
+      ],
+      "median": 8.39944455068625,
+      "min": 5.881343777386186,
+      "max": 8.517971601885373
+    },
+    {
+      "case": "normal-4194304",
+      "denominator": "shared",
+      "all_block_ratios": [
+        0.8327727044222255,
+        1.277371689073314,
+        2.3814638471091447,
+        1.992013484561192,
+        1.4827535155284826
+      ],
+      "median": 1.4827535155284826,
+      "min": 0.8327727044222255,
+      "max": 2.3814638471091447
+    },
+    {
+      "case": "normal-4194304",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        3.527030126437215,
+        5.430580798415683,
+        9.319483840133879,
+        7.778907663422349,
+        5.9213014105415445
+      ],
+      "median": 5.9213014105415445,
+      "min": 3.527030126437215,
+      "max": 9.319483840133879
+    },
+    {
+      "case": "slow-16384",
+      "denominator": "shared",
+      "all_block_ratios": [
+        1.0408096035838539,
+        0.9978610346574359,
+        1.018908865027327,
+        1.0437513254158588,
+        1.021547440007987
+      ],
+      "median": 1.021547440007987,
+      "min": 0.9978610346574359,
+      "max": 1.0437513254158588
+    },
+    {
+      "case": "slow-16384",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        1.018097893099513,
+        1.0423356128816446,
+        1.1049011636309019,
+        1.0946421039549468,
+        1.0893398721475562
+      ],
+      "median": 1.0893398721475562,
+      "min": 1.018097893099513,
+      "max": 1.1049011636309019
+    },
+    {
+      "case": "slow-1048576",
+      "denominator": "shared",
+      "all_block_ratios": [
+        1.0739667769524843,
+        1.0859745960890568,
+        1.0768648172897566,
+        1.2601463314382642,
+        1.404968596140469
+      ],
+      "median": 1.0859745960890568,
+      "min": 1.0739667769524843,
+      "max": 1.404968596140469
+    },
+    {
+      "case": "slow-1048576",
+      "denominator": "window_pipe",
+      "all_block_ratios": [
+        1.6967114020524754,
+        1.6056728072543784,
+        1.6329896599885259,
+        1.7344108881590172,
+        1.6782533300905764
+      ],
+      "median": 1.6782533300905764,
+      "min": 1.6056728072543784,
+      "max": 1.7344108881590172
+    }
+  ],
+  "assessment": "Original 2.309x and 8.399x at 1 MiB are all-five-block descriptive medians of verified finite exchanges. The former changes capacity/copy/protocol; the latter matches capacity/protocol but still includes Pipe allocation/copy and transport differences. Original latency ends at producer ACK observation; consumer-ready time was not recorded and cannot be reconstructed. Original RSS is sampled worker RSS, not unique physical RAM. New timing instrumentation requires fresh measurements."
+}

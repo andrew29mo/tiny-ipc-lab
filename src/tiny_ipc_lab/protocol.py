@@ -40,6 +40,8 @@ def crc(array):
 class Sender:
     def __init__(self, connection, mode, payload_bytes, block=None):
         check_config(mode, payload_bytes, 1)
+        if mode not in ("pipe", "shared"):
+            raise ValueError("Use PoolSender for loaned/windowed modes")
         self.connection, self.mode = connection, mode
         self.view = (np.ndarray((payload_bytes // 4,), dtype=np.float32, buffer=block.buf)
                      if mode == "shared" else None)
@@ -65,6 +67,8 @@ class Sender:
 class Receiver:
     def __init__(self, connection, mode, payload_bytes, block=None, pipe_receive="into", consumer_delay_s=0.):
         check_config(mode, payload_bytes, 1)
+        if mode not in ("pipe", "shared"):
+            raise ValueError("Use PoolReceiver for loaned/windowed modes")
         if pipe_receive not in ("into", "bytes"):
             raise ValueError("Unknown Pipe receive API")
         self.pipe_receive = pipe_receive
@@ -97,7 +101,9 @@ class Receiver:
         if not np.array_equal(self.view, self.expected):
             raise ProtocolError("Tensor differs from independently generated expected values")
         observed_crc = crc(self.view)
+        self.last_delay_start_s = time.perf_counter()
         if expected_sequence >= WARMUP and self.consumer_delay_s:
             time.sleep(self.consumer_delay_s)
+        self.last_ready_s = time.perf_counter()
         self.connection.send_bytes(ACK.pack(expected_sequence, observed_crc))
         return observed_crc

@@ -25,7 +25,7 @@ LIMITS = [
     "pipe/shared are the existing stop-and-wait protocols with one payload in flight. shared copies a staging array into its slot. pool_1/pool_n fill loaned shared slots in place. window_pipe fills local loaned slots in place and uses the same publication/release protocol and capacity as pool_n. All Pipe payloads use recv_bytes plus a copy to a preallocated consumer target.",
     "Pool and windowed Pipe carry additional slot/generation metadata. Pool_n versus legacy baselines includes changes in copy count, window and protocol. The equal-window Pipe control separates window size from transport more closely, but receiver allocation/copy behavior still differs. No end-to-end zero-copy claim: base/reference generation, validation and CRC remain included.",
     "Closed-loop, finite SPSC saturation traces, not a shared arrival schedule, inference service or production capacity estimate. Every block rotates profile order; five blocks balance all five positions. Partial subsets are never called a full grid.",
-    "Message completion latency starts before loan acquisition or legacy generation and ends when its valid ACK is processed by the producer. Pool latency includes capacity waiting and ACK collection scheduling. Capacity-reclaim counts mean no locally free slot, even if an ACK is already queued; reclaim time includes ACK processing, not only consumer waiting. It is not transport RTT or consumer service time. Drain of the final partial window is included in throughput.",
+    "ACK-observed latency starts before loan acquisition or legacy generation and ends when its valid ACK is processed by the producer. Pool latency includes capacity waiting and ACK collection scheduling. Capacity-reclaim counts mean no locally free slot, even if an ACK is already queued; reclaim time includes ACK processing, not only consumer waiting. Admitted-to-ready timing starts at slot acquisition (legacy generation start) and ends in the consumer after full validation and any declared delay, before sending ACK. Attempt-to-ready additionally includes admission waiting. ACK-observation lag includes ACK transmission and producer scheduling/reclamation. These are distinct clocks, not application latency under a common arrival schedule or pure transport RTT. Drain of the final partial window is included in throughput.",
     "Workers are fresh per trial; eight transfers warm protocol state before measurement, fully drained before start. Artificial consumer delay is applied only to measured messages after validation and before ACK in all profiles; requested sleep is not exact service time.",
     "RSS samples include two worker runtimes, arrays, touched pool pages, records and result serialization; baseline is after warmup. Shared pages may be counted twice. Sequential 5 ms requested samples can miss peaks; actual gaps are retained. Controller/resource tracker are excluded. Pool payload allocation is bounded; per-message evidence records still grow with the finite message count. RSS is not unique physical memory or total deployment size.",
     "Single host, fixed case order, uncontrolled CPU/cache/thermals and short trials. Ratios are medians of all within-block ratios with observed min/max, not confidence intervals or universal effects. Controller-managed worker-crash cleanup is tested; controller kill and power loss are outside the guarantee.",
@@ -79,7 +79,7 @@ def benchmark(directory, sizes=(64, 1024, 16384, 262144, 1048576, 4194304), bloc
         raise ValueError("Use a new output directory")
     (directory / "raw").mkdir(parents=True)
     cpu = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip() if sys.platform == "darwin" else None
-    report = {"schema_version": 3, "source_sha256": source_hash(), "generated_utc": datetime.now(timezone.utc).isoformat(),
+    report = {"schema_version": 4, "source_sha256": source_hash(), "generated_utc": datetime.now(timezone.utc).isoformat(),
               "recipe": RECIPE, "scope": LIMITS, "profiles": list(PROFILES), "blocks": blocks,
               "pool_capacity": capacity, "smoke": smoke, "pipe_receive": "bytes", "execution_order": [], "cases": [],
               "host": {"os": platform.system(), "os_release": platform.release(), "machine": platform.machine(),
@@ -114,7 +114,7 @@ def benchmark(directory, sizes=(64, 1024, 16384, 262144, 1048576, 4194304), bloc
 
 
 def verify(report, directory):
-    need(report["schema_version"] == 3 and report["source_sha256"] == source_hash() and report["scope"] == LIMITS
+    need(report["schema_version"] == 4 and report["source_sha256"] == source_hash() and report["scope"] == LIMITS
          and report["recipe"] == RECIPE and report["profiles"] == list(PROFILES) and report["pipe_receive"] == "bytes", "Stale pool experiment source/scope")
     check_capacity(report["pool_capacity"])
     need(report["pool_capacity"] >= 2 and type(report["blocks"]) is int and 1 <= report["blocks"] <= 10
@@ -138,7 +138,7 @@ def verify(report, directory):
             run = json.loads(gzip.decompress(data))
             mode, capacity = profile_config(p, report["pool_capacity"])
             need(run["mode"] == mode and run["capacity"] == capacity and run["profile"] == p and run["block"] == b
-                 and run["pipe_receive"] == "bytes" and all(run[k] == case[k] for k in ("payload_bytes", "count", "consumer_delay_s")), "Raw workload/profile differs")
+                 and run.get("timing_version") == 2 and run["pipe_receive"] == "bytes" and all(run[k] == case[k] for k in ("payload_bytes", "count", "consumer_delay_s")), "Raw workload/profile differs")
             environment = run["environment"] if environment is None else environment
             need(run["environment"] == environment, "Unequal runtime")
             need(summarize(run) == stub["summary"], "Summary differs from records")
@@ -147,15 +147,18 @@ def verify(report, directory):
 
 
 def overview(report):
-    lines = ["# Bounded IPC pool comparison", "", "Five-profile verified exchanges; all blocks retained. Completion latency includes loan waiting and ACK collection. RSS is sampled two-worker RSS, not unique physical RAM.", "",
-             "| Case | Profile | Count | MiB/s median | Completion p50 ms | Completion p95 ms | Baseline RSS MiB median | Peak RSS MiB max | Slots max | ACK-reclaim events median | Reclaim ms total median |", "|" + "---|" * 11]
+    lines = ["# Bounded IPC pool comparison", "", "Five-profile verified exchanges; all blocks retained. ACK-observed latency includes loan waiting and ACK collection; admitted-to-ready and ACK-observation lag are reported separately. RSS is sampled two-worker RSS, not unique physical RAM.", "",
+             "| Case | Profile | Count | MiB/s median | ACK-observed p50 ms | ACK-observed p95 ms | Admitted-to-ready p95 ms | ACK-observation lag p95 ms | Baseline RSS MiB median | Peak RSS MiB max | Slots max | ACK-reclaim events median | Reclaim ms total median | Max RSS gap ms |", "|" + "---|" * 14]
     for case in report["cases"]:
         for profile in PROFILES:
             stats = [r["summary"] for r in case["runs"] if r["profile"] == profile]
             values = [case["id"], profile, case["count"], f'{median(s["payload_mib_per_s"] for s in stats):.2f}',
                       f'{median(s["round_trip_ms"]["p50"] for s in stats):.4f}', f'{median(s["round_trip_ms"]["p95"] for s in stats):.4f}',
+                      f'{median(s["admitted_to_ready_ms"]["p95"] for s in stats):.4f}',
+                      f'{median(s["ack_observation_lag_ms"]["p95"] for s in stats):.4f}',
                       f'{median(s["baseline_paired_rss_bytes"] for s in stats)/1048576:.2f}', f'{max(s["peak_paired_rss_bytes"] for s in stats)/1048576:.2f}',
-                      max(s.get("peak_owned_slots", 1) for s in stats), median(s.get("capacity_wait_count", 0) for s in stats), f'{median(s.get("capacity_wait_s", 0.) for s in stats)*1000:.3f}']
+                      max(s.get("peak_owned_slots", 1) for s in stats), median(s.get("capacity_wait_count", 0) for s in stats), f'{median(s.get("capacity_wait_s", 0.) for s in stats)*1000:.3f}',
+                      f'{max(s["max_rss_gap_ms"] for s in stats):.3f}']
             lines.append("| " + " | ".join(map(str, values)) + " |")
     lines += ["", "All within-block throughput ratios: median [observed min, max], not a confidence interval.", "", "| Case | Numerator / denominator | Ratio |", "|---|---|---|"]
     lines += [f'| {r["case"]} | {r["numerator"]} / {r["denominator"]} | {r["median"]:.3f} [{r["min"]:.3f}, {r["max"]:.3f}] |' for r in ratios(report)]

@@ -118,7 +118,8 @@ def consumer(data, control, mode, payload_bytes, count, name, pipe_receive, capa
         for seq in range(WARMUP, WARMUP + count):
             value = receiver.receive(seq)
             observed_crc = value[0] if streaming else value
-            row = {"sequence": seq, "crc32": observed_crc, "verified_elements": payload_bytes // 4}
+            row = {"sequence": seq, "crc32": observed_crc, "verified_elements": payload_bytes // 4,
+                   "delay_start_s": receiver.last_delay_start_s, "ready_s": receiver.last_ready_s}
             if streaming:
                 row.update(slot=value[1], generation=value[2])
             records.append(row)
@@ -240,7 +241,7 @@ def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _
         for ctl in controls:
             ctl.send("close")
         result = {"mode": mode, "pipe_receive": pipe_receive, "payload_bytes": payload_bytes, "count": count, "warmup": WARMUP,
-                  "capacity": capacity, "consumer_delay_s": consumer_delay_s,
+                  "capacity": capacity, "consumer_delay_s": consumer_delay_s, "timing_version": 2,
                   "producer": p_result, "consumer": c_result, "rss_samples": samples,
                   "memory_window": {"start_s": window_start, "end_s": window_end},
                   "environment": {"python": platform.python_version(), "numpy": np.__version__,

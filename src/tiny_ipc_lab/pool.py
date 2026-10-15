@@ -139,8 +139,10 @@ class PoolReceiver:
         if not np.array_equal(view, self.expected):
             raise ProtocolError("Loaned tensor content differs")
         checksum = crc(view)
+        self.last_delay_start_s = time.perf_counter()
         if sequence >= WARMUP and self.consumer_delay_s:
             time.sleep(self.consumer_delay_s)
+        self.last_ready_s = time.perf_counter()
         self.connection.send_bytes(RELEASE.pack(sequence, slot, generation, checksum))
         self.generations[slot] = generation
         self.next_sequence += 1
