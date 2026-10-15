@@ -1,9 +1,34 @@
-# Third-party materials and license status
+# Third-party materials and licenses
 
-The workload uses procedurally generated synthetic numeric tensors; no external model weights, dataset or sibling project's source files are included.
+Original Tiny IPC Lab contributions (source, documentation, tests and synthetic
+measurement artifacts) are licensed under the [MIT License](LICENSE),
+Copyright (c) 2026 Andrew Yuan. This grant does not replace third-party licenses.
 
-NumPy and psutil are installed dependencies, not vendored source. They retain their upstream licenses: [NumPy license](https://github.com/numpy/numpy/blob/v1.26.4/LICENSE.txt) and [psutil license](https://github.com/giampaolo/psutil/blob/release-7.0.0/LICENSE). Python's standard-library multiprocessing facilities retain Python's license. Links in methodology are API/design references and do not transfer their projects' licenses to this implementation.
+The workload uses procedurally generated synthetic numeric tensors. No external
+model weights, dataset or sibling project's implementation is included.
 
-No license has been selected for original project contributions, including source, documentation, tests and measurement artifacts. Private GitHub visibility does not itself select an open-source license.
+| Component | Purpose | Upstream license / notice |
+|---|---|---|
+| NumPy 1.26.4 | Installed runtime dependency | [BSD-3-Clause](https://github.com/numpy/numpy/blob/v1.26.4/LICENSE.txt) |
+| psutil 7.0.0 | Installed runtime dependency | [BSD-3-Clause](https://github.com/giampaolo/psutil/blob/release-7.0.0/LICENSE) |
+| setuptools 83.0.0 | Isolated build dependency | [MIT](https://github.com/pypa/setuptools/blob/v83.0.0/LICENSE) |
+| Colima 0.10.3 | Downloaded local validation tool | [MIT](https://github.com/abiosoft/colima/blob/v0.10.3/LICENSE) |
+| Lima 2.2.1 | Downloaded local validation tool | [Apache-2.0](https://github.com/lima-vm/lima/blob/v2.2.1/LICENSE) |
 
-Local validation downloads upstream Colima/Lima tools and a Python container image; binaries and images are not committed or redistributed by this repository. Upstream licenses remain applicable: [Colima](https://github.com/abiosoft/colima/blob/v0.10.3/LICENSE), [Lima](https://github.com/lima-vm/lima/blob/v2.2.1/LICENSE), and [Python image](https://hub.docker.com/_/python). The installer reuses the separately installed Docker CLI. This does not change the original project license status above.
+These components are installed/downloaded, not vendored source or binaries in
+this repository. Their upstream copyright notices, conditions and disclaimers
+remain applicable. NumPy wheels may bundle separately licensed libraries; their
+bundled notices remain applicable as well. No dependency wheel or built container
+image is redistributed by this repository.
+
+Python and its standard-library multiprocessing facilities retain
+[Python's license](https://docs.python.org/3.12/license.html). Local validation uses
+the [official Python image](https://hub.docker.com/_/python) and its operating-system
+packages under their respective upstream terms. The installer reuses the
+separately installed Docker CLI; this project does not relicense Docker Desktop.
+Links in methodology are API/design references, not grants to relicense those
+projects. No original-project MIT statement applies to third-party components.
+
+Historical review receipts identify immutable audited revisions. Their
+`not-selected` license fields describe the state before the owner's later MIT
+adoption; they are preserved as historical evidence, not current license metadata.

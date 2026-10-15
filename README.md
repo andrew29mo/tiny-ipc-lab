@@ -118,9 +118,9 @@ Historical verification needs full Git history. The diagnostic verifier checks r
 
 See [methodology](docs/METHODOLOGY.md), [related systems and next experiments](docs/RELATED_WORK.md), [security scope](SECURITY.md) and [third-party materials](THIRD_PARTY_NOTICES.md).
 
-## License status
+## License
 
-No license has been selected for original project contributions. Installed dependencies retain their upstream licenses. No license from a sibling project is implicitly assigned here.
+Original project contributions, including source, documentation, tests and synthetic measurement artifacts, are licensed under the [MIT License](LICENSE). Copyright (c) 2026 Andrew Yuan. Third-party dependencies and validation tools retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Local macOS and Linux validation
 
@@ -151,5 +151,7 @@ run above; no cross-environment speedup or whole-VM memory saving is inferred.
 The [pre-publication review](reviews/prepublication-20261015/README.md) rechecked
 the retained performance claims, both published local-record sets and all fetched
 Git history, and repeated the 59-test suites on both platforms with actual IPC
-smoke. Production code and historical numbers were unchanged. The project license
-remains unselected; repository visibility has not been changed by that review.
+smoke. Production code and historical numbers were unchanged. That review recorded the
+then-unselected license; MIT was subsequently adopted by the owner. Historical
+receipts retain the license state of their audited revisions. Repository visibility
+was not changed by either operation.

@@ -60,12 +60,13 @@ private home/runtime/temporary prefixes redacted. GitHub had no release assets o
 Actions artifacts and only the owner as collaborator. The repository remains
 Private; no branch/tag/history rewrite or new access grant was performed.
 
-## License and remaining decisions
+## License state at the reviewed revision
 
-Original contributions still have **no selected project license**: there is no
-project LICENSE file or package license declaration, consistent with the README
-and [third-party notice](../../THIRD_PARTY_NOTICES.md). This review does not assign
-MIT from a sibling project. License selection remains the owner's decision.
+At reviewed revision `7c8ef16`, original contributions had **no selected project
+license**, LICENSE file or package license declaration. The owner subsequently
+adopted [MIT](../../LICENSE); the current [third-party notice](../../THIRD_PARTY_NOTICES.md)
+describes that grant. The historical `audit.json` retains its original
+`not-selected` field and is not rewritten as if MIT existed during that review.
 
 The workload is generated synthetic tensors, with no external model/dataset or
 vendored dependency binaries. Upstream pinned sources confirm
