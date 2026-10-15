@@ -104,6 +104,7 @@ python -O -m unittest discover -s tests
 python tools/run_mutations.py
 python tools/check_project.py --directory results/macos-arm64-pool-reviewed
 python tools/check_project.py --directory results/macos-arm64-pool
+python tools/check_project.py --directory results/macos-arm64-pool-development
 python tools/check_project.py
 python tools/check_project.py --directory results/macos-arm64-pipe-bytes
 python tools/diagnose_rss.py --verify
@@ -146,3 +147,9 @@ ten source faults and the full 200-trial / 654,450-exchange grid. An additional
 real Docker client-timeout probe verified evidence recovery, container removal
 and VM shutdown. These new observations remain separate from the native primary
 run above; no cross-environment speedup or whole-VM memory saving is inferred.
+
+The [pre-publication review](reviews/prepublication-20261015/README.md) rechecked
+the retained performance claims, both published local-record sets and all fetched
+Git history, and repeated the 59-test suites on both platforms with actual IPC
+smoke. Production code and historical numbers were unchanged. The project license
+remains unselected; repository visibility has not been changed by that review.

@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "audited_commit": "7c8ef16fd95c196d5b91b13fc0154b33a220a566",
+  "source_sha256": "5cc142fee7e35f3f5a9f109c8631e3e47257cf1bbafe85707b693958c4ef2b3d",
+  "snapshot_tree_sha256": "08a252b3085ce424cb8c998fe005eeb26816fcedf160b9a48b488a12440ab5e9",
+  "assessment": "No implementation or performance-calculation mismatch found. Project license remains unselected; no publication/visibility change authorized by this review.",
+  "project_license": "not-selected",
+  "third_party_materials": "Synthetic tensors only; installed dependencies/tooling retain upstream licenses; no vendored binaries/images/model/data.",
+  "history_scan": {
+    "reachable_objects": 990,
+    "blobs": 898,
+    "decompressed_blobs": 744,
+    "findings": [],
+    "commit_objects_scanned": 11,
+    "commit_message_findings": [],
+    "all_email_identities_github_noreply_or_known_tool": true,
+    "remote_refs": [
+      "refs/remotes/origin/HEAD 7c8ef16fd95c196d5b91b13fc0154b33a220a566",
+      "refs/remotes/origin/dependabot/github_actions/actions/checkout-7.0.1 6b5ea677fd01543363a63704f266fd12a4044571",
+      "refs/remotes/origin/dependabot/github_actions/actions/setup-python-7.0.0 d80e3b7670e32eb923d446492b35632927f86578",
+      "refs/remotes/origin/dependabot/pip/numpy-2.5.4 ddfaadfccd32936d154a993b4d4cd458d8a22c20",
+      "refs/remotes/origin/dependabot/pip/psutil-7.2.2 9e99af4605c0fc277f6f09d840c426cc4a2cf818",
+      "refs/remotes/origin/dependabot/pip/setuptools-84.0.0 1f0ed8ca69dfd68f07c643c764b9c501821669f4",
+      "refs/remotes/origin/main 7c8ef16fd95c196d5b91b13fc0154b33a220a566"
+    ],
+    "scope": "Reachable blobs (gzip expanded), path names, commit messages and email identity categories; targeted heuristic patterns, not a comprehensive credential detector."
+  },
+  "prior_full_record_checks": [
+    {
+      "directory": "local-validation-20261015",
+      "status": "passed",
+      "environments": 2,
+      "measurement_trials_per_environment": 200,
+      "measurement_messages_per_environment": 654450,
+      "tests_per_mode": 46
+    },
+    {
+      "directory": "local-validation-audit-20261015",
+      "status": "passed",
+      "environments": 2,
+      "measurement_trials_per_environment": 200,
+      "measurement_messages_per_environment": 654450,
+      "tests_per_mode": 59
+    }
+  ],
+  "local_verification": {
+    "run_id": "20261015T132738Z",
+    "kind": "smoke",
+    "status": "passed",
+    "combined_sha256": "107cca07d982e38e4c2d42781dedf3836edea80effe7c30e23b991283f8fbc67",
+    "html_sha256": "f9b388234f75f8bf45ce5d5fc2f5a91eb09443c88ae4e0d7d4b8f94a23bbb508",
+    "cleanup": {
+      "container": "removed",
+      "vm": "stopped",
+      "errors": [],
+      "evidence_copied": true,
+      "container_id": "2d470c4ff17a"
+    },
+    "environments": {
+      "native": {
+        "host": {
+          "os": "Darwin",
+          "release": "27.0.0",
+          "machine": "arm64",
+          "python": "3.12.14"
+        },
+        "versions": {
+          "numpy": "1.26.4",
+          "psutil": "7.0.0"
+        },
+        "source_sha256": "5cc142fee7e35f3f5a9f109c8631e3e47257cf1bbafe85707b693958c4ef2b3d",
+        "status": "passed",
+        "implementation_files": {
+          "src/tiny_ipc_lab/pool_bench.py": "6f2857c8278ea839d7fbfad3987ab2ddbe46d4c38ce261502cdcddb2cc297daf",
+          "src/tiny_ipc_lab/protocol.py": "d7cab1e318d143d3c80f5e048e6a122a931591562edbb1093ed21ea743f76362",
+          "src/tiny_ipc_lab/__init__.py": "7c5a91acadae15cc9a2a783fc09f9f0019c0f289bc2414b80fe126b2ff77784f",
+          "src/tiny_ipc_lab/experiment.py": "c84cf1585c53b73bf42bdffa67262f1e22553394e1e0b17a8cf8ee6b62405617",
+          "src/tiny_ipc_lab/cli.py": "a9bd3c28ab6c27e3bc293471fbbf66ef4241e1c1f6ee3a5e78eec7de0eb1ff49",
+          "src/tiny_ipc_lab/pool.py": "52dcfe1aa021ed48a22e554cef7eeb461f7953aa54c920a5f72cb7ec676804ff",
+          "src/tiny_ipc_lab/report.py": "9312bdde0b18fff06736d94550394f4b113913dcb61529b30de70b65a6753dbb"
+        },
+        "measurement": {
+          "file": "benchmark/report.json",
+          "sha256": "a4a85aff58145db797c0f83b4b641b9f0fe6f5ff23ffab5152fb22d640a9ac3b",
+          "trials": 40,
+          "messages": 680
+        },
+        "formal_steps": [
+          {
+            "name": "tests",
+            "command": [
+              "<python>",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 30.6630358750117,
+            "tests_run": 59,
+            "test_ids": [
+              "test_ipc.ProcessTests.test_actual_spawn_workers_check_all_rows_and_cleanup_after_reuse",
+              "test_ipc.ProcessTests.test_allocation_failure_after_shared_create_still_unlinks",
+              "test_ipc.ProcessTests.test_invalid_configuration_does_not_start_children",
+              "test_ipc.ProcessTests.test_parent_descriptors_do_not_accumulate_over_repeated_trials",
+              "test_ipc.ProcessTests.test_partial_control_result_cannot_block_supervisor_deadline",
+              "test_ipc.ProcessTests.test_public_bytes_api_actual_large_transfers_and_reuse",
+              "test_ipc.ProcessTests.test_real_worker_crashes_do_not_leave_peers_or_shared_segments",
+              "test_ipc.ProcessTests.test_stalled_real_consumer_hits_trial_deadline_and_is_reaped",
+              "test_ipc.ProtocolTests.test_ack_is_required_before_buffer_reuse_and_every_generation_changes",
+              "test_ipc.ProtocolTests.test_bytes_receive_api_checks_complete_tensor_and_short_payload",
+              "test_ipc.ProtocolTests.test_legacy_protocol_rejects_pool_modes_instead_of_silently_skipping_payload",
+              "test_ipc.ProtocolTests.test_receiver_checks_middle_values_and_stale_shared_generation",
+              "test_ipc.ProtocolTests.test_receiver_rejects_skipped_repeated_or_wrong_length_headers",
+              "test_ipc.ProtocolTests.test_sender_rejects_wrong_ack_sequence_or_crc",
+              "test_ipc.ProtocolTests.test_shared_consumer_view_is_read_only_while_owner_can_write",
+              "test_ipc.ProtocolTests.test_short_pipe_payload_is_not_completed_using_stale_buffer_bytes",
+              "test_pool.PoolEvidenceTests.test_failed_trial_retains_partial_index_and_cleanup_without_final_report",
+              "test_pool.PoolEvidenceTests.test_forged_metrics_policy_and_missing_trials_are_rejected",
+              "test_pool.PoolEvidenceTests.test_independent_oracle_rejects_forged_crc_and_illegal_reuse",
+              "test_pool.PoolEvidenceTests.test_production_reports_reconcile_and_all_profiles_same_work",
+              "test_pool.PoolMetricsTests.test_hand_calculated_overlap_capacity_wait_and_tail_duration",
+              "test_pool.PoolMetricsTests.test_rejects_fifo_ack_reordering_and_impossible_consumer_timing",
+              "test_pool.PoolProcessTests.test_actual_tail_windows_and_slow_consumer_all_profiles",
+              "test_pool.PoolProcessTests.test_pool_segment_is_unlinked_if_later_pipe_allocation_fails",
+              "test_pool.PoolProcessTests.test_pool_timeout_and_descriptor_cleanup",
+              "test_pool.PoolProcessTests.test_production_worker_generates_directly_into_owned_shared_slots",
+              "test_pool.PoolProcessTests.test_small_exact_and_partial_windows_in_actual_processes",
+              "test_pool.PoolProcessTests.test_workers_crashing_with_live_loans_reap_peers_and_unlink",
+              "test_pool.PoolProtocolTests.test_direct_write_ownership_and_revoke_view_after_publish",
+              "test_pool.PoolProtocolTests.test_full_pool_blocks_until_consumer_ack_and_then_reuses_generation",
+              "test_pool.PoolProtocolTests.test_invalid_publication_fields_do_not_ack_or_advance",
+              "test_pool.PoolProtocolTests.test_invalid_release_fields_and_duplicate_do_not_return_ownership",
+              "test_pool.PoolProtocolTests.test_receiver_rejects_stale_generation_and_middle_value_corruption",
+              "test_pool.PoolProtocolTests.test_stale_release_cannot_free_current_generation",
+              "test_report.EvidenceTests.test_corruption_and_self_consistent_wrong_payload_crc_are_rejected",
+              "test_report.EvidenceTests.test_first_trial_failure_leaves_explicit_incomplete_evidence",
+              "test_report.EvidenceTests.test_production_benchmark_and_report_reconcile_every_message",
+              "test_report.EvidenceTests.test_report_rejects_forged_metrics_missing_pairs_or_unequal_work",
+              "test_report.MetricsTests.test_hand_calculated_duration_latency_and_simultaneous_rss",
+              "test_report.MetricsTests.test_paired_ratio_is_not_a_ratio_of_independent_medians",
+              "test_report.MetricsTests.test_rejects_missing_repeated_reordered_or_contradictory_records",
+              "test_validation.ReviewRegressionTests.test_cleanup_command_timeout_is_failure_and_retained",
+              "test_validation.ReviewRegressionTests.test_duplicate_fault_lines_cannot_replace_complete_matrix",
+              "test_validation.ReviewRegressionTests.test_failed_initial_vm_stop_cannot_start_measurement",
+              "test_validation.ReviewRegressionTests.test_failed_remove_and_export_keep_failure_and_still_stop_vm",
+              "test_validation.ReviewRegressionTests.test_final_integrity_failure_rewrites_pass_claim",
+              "test_validation.ReviewRegressionTests.test_hashed_but_semantically_invalid_benchmark_rejected",
+              "test_validation.ReviewRegressionTests.test_html_distinguishes_vm_rss_and_escapes_metadata",
+              "test_validation.ReviewRegressionTests.test_import_from_outside_snapshot_rejected",
+              "test_validation.ReviewRegressionTests.test_install_failure_recorded_not_left_running",
+              "test_validation.ReviewRegressionTests.test_installed_lima_bytes_checked_not_just_version",
+              "test_validation.ReviewRegressionTests.test_same_project_lock_rejects_concurrent_run",
+              "test_validation.ReviewRegressionTests.test_sigterm_reaps_actual_owned_processes",
+              "test_validation.ReviewRegressionTests.test_timeout_reaps_descendant_in_new_session",
+              "test_validation.ValidationTests.test_actual_nonzero_process_cannot_pass",
+              "test_validation.ValidationTests.test_actual_timeout_cannot_pass",
+              "test_validation.ValidationTests.test_claimed_pass_with_missing_steps_rejected",
+              "test_validation.ValidationTests.test_production_commands_same_for_full_and_smoke",
+              "test_validation.ValidationTests.test_tampered_log_rejected_before_claimed_test_results"
+            ],
+            "original_log_sha256": "6464a019c4a12c04e6af1f830d7c3b59d9d6c942e6a32b3d810f1a6ac28ee71d",
+            "sanitized_log": "logs/native/tests.txt",
+            "sanitized_log_sha256": "f0d026325cf1f2abdc015fc36a8b4e931ded91f7f9431c09eeab4140244f7e2b"
+          },
+          {
+            "name": "optimized",
+            "command": [
+              "<python>",
+              "-O",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 28.99051595799392,
+            "tests_run": 59,
+            "original_log_sha256": "2a4f07d57b5d9eaaae34dc799b1459bbaec4f7ad66d704c2cc43d79737a4c9d4",
+            "sanitized_log": "logs/native/optimized.txt",
+            "sanitized_log_sha256": "f18e971204eb65b482186ed5eebe3ff91244dcf0dfa12de42a64a56dc397a4f5"
+          },
+          {
+            "name": "mutations",
+            "command": [
+              "<python>",
+              "tools/run_mutations.py"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 14.114216249989113,
+            "fault_ids": [
+              "skip_shared_copy",
+              "stale_sequence",
+              "reuse_before_ack",
+              "skip_full_tensor_validation",
+              "trust_wrong_ack",
+              "pool_reuse_before_ack",
+              "pool_ignore_release_generation",
+              "pool_ignore_publication_generation",
+              "pool_skip_full_validation",
+              "worker_staging_copy_instead_of_inplace"
+            ],
+            "faults_detected": 10,
+            "original_log_sha256": "aa3ca48e5afe6fb555faade3b0daa3ba097f49ec6427d6b182645661cd14334d",
+            "sanitized_log": "logs/native/mutations.txt",
+            "sanitized_log_sha256": "aa3ca48e5afe6fb555faade3b0daa3ba097f49ec6427d6b182645661cd14334d"
+          }
+        ]
+      },
+      "linux": {
+        "host": {
+          "os": "Linux",
+          "release": "6.8.0-117-generic",
+          "machine": "aarch64",
+          "python": "3.12.14"
+        },
+        "versions": {
+          "numpy": "1.26.4",
+          "psutil": "7.0.0"
+        },
+        "source_sha256": "5cc142fee7e35f3f5a9f109c8631e3e47257cf1bbafe85707b693958c4ef2b3d",
+        "status": "passed",
+        "implementation_files": {
+          "src/tiny_ipc_lab/pool_bench.py": "6f2857c8278ea839d7fbfad3987ab2ddbe46d4c38ce261502cdcddb2cc297daf",
+          "src/tiny_ipc_lab/report.py": "9312bdde0b18fff06736d94550394f4b113913dcb61529b30de70b65a6753dbb",
+          "src/tiny_ipc_lab/protocol.py": "d7cab1e318d143d3c80f5e048e6a122a931591562edbb1093ed21ea743f76362",
+          "src/tiny_ipc_lab/experiment.py": "c84cf1585c53b73bf42bdffa67262f1e22553394e1e0b17a8cf8ee6b62405617",
+          "src/tiny_ipc_lab/cli.py": "a9bd3c28ab6c27e3bc293471fbbf66ef4241e1c1f6ee3a5e78eec7de0eb1ff49",
+          "src/tiny_ipc_lab/pool.py": "52dcfe1aa021ed48a22e554cef7eeb461f7953aa54c920a5f72cb7ec676804ff",
+          "src/tiny_ipc_lab/__init__.py": "7c5a91acadae15cc9a2a783fc09f9f0019c0f289bc2414b80fe126b2ff77784f"
+        },
+        "measurement": {
+          "file": "benchmark/report.json",
+          "sha256": "4246ee48edc2b9750daac98175552fda1347132b9395d8f15cfca0a04d66f1cd",
+          "trials": 40,
+          "messages": 680
+        },
+        "formal_steps": [
+          {
+            "name": "tests",
+            "command": [
+              "<python>",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 24.509396662000004,
+            "tests_run": 59,
+            "test_ids": [
+              "test_ipc.ProcessTests.test_actual_spawn_workers_check_all_rows_and_cleanup_after_reuse",
+              "test_ipc.ProcessTests.test_allocation_failure_after_shared_create_still_unlinks",
+              "test_ipc.ProcessTests.test_invalid_configuration_does_not_start_children",
+              "test_ipc.ProcessTests.test_parent_descriptors_do_not_accumulate_over_repeated_trials",
+              "test_ipc.ProcessTests.test_partial_control_result_cannot_block_supervisor_deadline",
+              "test_ipc.ProcessTests.test_public_bytes_api_actual_large_transfers_and_reuse",
+              "test_ipc.ProcessTests.test_real_worker_crashes_do_not_leave_peers_or_shared_segments",
+              "test_ipc.ProcessTests.test_stalled_real_consumer_hits_trial_deadline_and_is_reaped",
+              "test_ipc.ProtocolTests.test_ack_is_required_before_buffer_reuse_and_every_generation_changes",
+              "test_ipc.ProtocolTests.test_bytes_receive_api_checks_complete_tensor_and_short_payload",
+              "test_ipc.ProtocolTests.test_legacy_protocol_rejects_pool_modes_instead_of_silently_skipping_payload",
+              "test_ipc.ProtocolTests.test_receiver_checks_middle_values_and_stale_shared_generation",
+              "test_ipc.ProtocolTests.test_receiver_rejects_skipped_repeated_or_wrong_length_headers",
+              "test_ipc.ProtocolTests.test_sender_rejects_wrong_ack_sequence_or_crc",
+              "test_ipc.ProtocolTests.test_shared_consumer_view_is_read_only_while_owner_can_write",
+              "test_ipc.ProtocolTests.test_short_pipe_payload_is_not_completed_using_stale_buffer_bytes",
+              "test_pool.PoolEvidenceTests.test_failed_trial_retains_partial_index_and_cleanup_without_final_report",
+              "test_pool.PoolEvidenceTests.test_forged_metrics_policy_and_missing_trials_are_rejected",
+              "test_pool.PoolEvidenceTests.test_independent_oracle_rejects_forged_crc_and_illegal_reuse",
+              "test_pool.PoolEvidenceTests.test_production_reports_reconcile_and_all_profiles_same_work",
+              "test_pool.PoolMetricsTests.test_hand_calculated_overlap_capacity_wait_and_tail_duration",
+              "test_pool.PoolMetricsTests.test_rejects_fifo_ack_reordering_and_impossible_consumer_timing",
+              "test_pool.PoolProcessTests.test_actual_tail_windows_and_slow_consumer_all_profiles",
+              "test_pool.PoolProcessTests.test_pool_segment_is_unlinked_if_later_pipe_allocation_fails",
+              "test_pool.PoolProcessTests.test_pool_timeout_and_descriptor_cleanup",
+              "test_pool.PoolProcessTests.test_production_worker_generates_directly_into_owned_shared_slots",
+              "test_pool.PoolProcessTests.test_small_exact_and_partial_windows_in_actual_processes",
+              "test_pool.PoolProcessTests.test_workers_crashing_with_live_loans_reap_peers_and_unlink",
+              "test_pool.PoolProtocolTests.test_direct_write_ownership_and_revoke_view_after_publish",
+              "test_pool.PoolProtocolTests.test_full_pool_blocks_until_consumer_ack_and_then_reuses_generation",
+              "test_pool.PoolProtocolTests.test_invalid_publication_fields_do_not_ack_or_advance",
+              "test_pool.PoolProtocolTests.test_invalid_release_fields_and_duplicate_do_not_return_ownership",
+              "test_pool.PoolProtocolTests.test_receiver_rejects_stale_generation_and_middle_value_corruption",
+              "test_pool.PoolProtocolTests.test_stale_release_cannot_free_current_generation",
+              "test_report.EvidenceTests.test_corruption_and_self_consistent_wrong_payload_crc_are_rejected",
+              "test_report.EvidenceTests.test_first_trial_failure_leaves_explicit_incomplete_evidence",
+              "test_report.EvidenceTests.test_production_benchmark_and_report_reconcile_every_message",
+              "test_report.EvidenceTests.test_report_rejects_forged_metrics_missing_pairs_or_unequal_work",
+              "test_report.MetricsTests.test_hand_calculated_duration_latency_and_simultaneous_rss",
+              "test_report.MetricsTests.test_paired_ratio_is_not_a_ratio_of_independent_medians",
+              "test_report.MetricsTests.test_rejects_missing_repeated_reordered_or_contradictory_records",
+              "test_validation.ReviewRegressionTests.test_cleanup_command_timeout_is_failure_and_retained",
+              "test_validation.ReviewRegressionTests.test_duplicate_fault_lines_cannot_replace_complete_matrix",
+              "test_validation.ReviewRegressionTests.test_failed_initial_vm_stop_cannot_start_measurement",
+              "test_validation.ReviewRegressionTests.test_failed_remove_and_export_keep_failure_and_still_stop_vm",
+              "test_validation.ReviewRegressionTests.test_final_integrity_failure_rewrites_pass_claim",
+              "test_validation.ReviewRegressionTests.test_hashed_but_semantically_invalid_benchmark_rejected",
+              "test_validation.ReviewRegressionTests.test_html_distinguishes_vm_rss_and_escapes_metadata",
+              "test_validation.ReviewRegressionTests.test_import_from_outside_snapshot_rejected",
+              "test_validation.ReviewRegressionTests.test_install_failure_recorded_not_left_running",
+              "test_validation.ReviewRegressionTests.test_installed_lima_bytes_checked_not_just_version",
+              "test_validation.ReviewRegressionTests.test_same_project_lock_rejects_concurrent_run",
+              "test_validation.ReviewRegressionTests.test_sigterm_reaps_actual_owned_processes",
+              "test_validation.ReviewRegressionTests.test_timeout_reaps_descendant_in_new_session",
+              "test_validation.ValidationTests.test_actual_nonzero_process_cannot_pass",
+              "test_validation.ValidationTests.test_actual_timeout_cannot_pass",
+              "test_validation.ValidationTests.test_claimed_pass_with_missing_steps_rejected",
+              "test_validation.ValidationTests.test_production_commands_same_for_full_and_smoke",
+              "test_validation.ValidationTests.test_tampered_log_rejected_before_claimed_test_results"
+            ],
+            "original_log_sha256": "167eeec9de475e61d31653a94a0887383f01fd9ff7454182bc2fc00e0fb51f75",
+            "sanitized_log": "logs/linux/tests.txt",
+            "sanitized_log_sha256": "167eeec9de475e61d31653a94a0887383f01fd9ff7454182bc2fc00e0fb51f75"
+          },
+          {
+            "name": "optimized",
+            "command": [
+              "<python>",
+              "-O",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 35.714497154,
+            "tests_run": 59,
+            "original_log_sha256": "f65c556314d48ae88e8306b95c740b3a9b5ac95d548ea100771c1004ddfe85fa",
+            "sanitized_log": "logs/linux/optimized.txt",
+            "sanitized_log_sha256": "f65c556314d48ae88e8306b95c740b3a9b5ac95d548ea100771c1004ddfe85fa"
+          },
+          {
+            "name": "mutations",
+            "command": [
+              "<python>",
+              "tools/run_mutations.py"
+            ],
+            "status": "passed",
+            "exit_code": 0,
+            "elapsed_s": 2.476574286999991,
+            "fault_ids": [
+              "skip_shared_copy",
+              "stale_sequence",
+              "reuse_before_ack",
+              "skip_full_tensor_validation",
+              "trust_wrong_ack",
+              "pool_reuse_before_ack",
+              "pool_ignore_release_generation",
+              "pool_ignore_publication_generation",
+              "pool_skip_full_validation",
+              "worker_staging_copy_instead_of_inplace"
+            ],
+            "faults_detected": 10,
+            "original_log_sha256": "aa3ca48e5afe6fb555faade3b0daa3ba097f49ec6427d6b182645661cd14334d",
+            "sanitized_log": "logs/linux/mutations.txt",
+            "sanitized_log_sha256": "aa3ca48e5afe6fb555faade3b0daa3ba097f49ec6427d6b182645661cd14334d"
+          }
+        ]
+      }
+    }
+  },
+  "retained_local_evidence": "Full original logs, canonical JSON/HTML and raw exchanges remain under ignored results/local/validation/<run_id>. Published logs are sanitized. This is not GitHub-hosted CI success."
+}
