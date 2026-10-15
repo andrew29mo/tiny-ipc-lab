@@ -59,11 +59,26 @@ def summarize(run, *, check_values=True):
     need([r["sequence"] for r in rows] == [r["sequence"] for r in received] == expected_sequence, "Missing, repeated or reordered sequence")
     base = np.arange(size // 4, dtype=np.float64) if check_values else None
     previous = producer["start_s"]
+    streaming = mode in ("pool", "window_pipe")
+    capacity = run.get("capacity", 1)
+    need(type(capacity) is int and 1 <= capacity <= 16 and (streaming or capacity == 1), "Invalid capacity")
+    slot_ends, events = {}, []
     latencies = []
     for sent, got in zip(rows, received):
         need(finite(sent["start_s"]) and finite(sent["end_s"])
              and previous <= sent["start_s"] < sent["end_s"] <= producer["end_s"], "Invalid round-trip chronology")
-        previous = sent["end_s"]
+        previous = sent["published_s"] if streaming else sent["end_s"]
+        if streaming:
+            slot, generation = sent["sequence"] % capacity, sent["sequence"] // capacity + 1
+            need(sent["slot"] == got["slot"] == slot and sent["generation"] == got["generation"] == generation, "Slot/generation differs")
+            need(finite(sent["acquired_s"]) and finite(sent["published_s"])
+                 and sent["start_s"] <= sent["acquired_s"] <= sent["published_s"] <= sent["end_s"]
+                 and slot_ends.get(slot, producer["start_s"]) <= sent["acquired_s"], "Slot reused before matching ACK")
+            need(type(sent["waited_for_capacity"]) is bool and finite(sent["acquire_wait_s"])
+                 and sent["acquire_wait_s"] == (sent["acquired_s"] - sent["start_s"] if sent["waited_for_capacity"] else 0.), "Invalid capacity wait")
+            need(sent["waited_for_capacity"] == (sum(t > sent["start_s"] for t in slot_ends.values()) == capacity), "Capacity reclamation accounting differs")
+            slot_ends[slot] = sent["end_s"]
+            events += [(sent["acquired_s"], 1), (sent["end_s"], -1)]
         expected_crc = zlib.crc32((base + sent["sequence"]).astype(np.float32)) & 0xffffffff if check_values else sent["input_crc32"]
         need(type(expected_crc) is int and 0 <= expected_crc <= 0xffffffff
              and sent["input_crc32"] == sent["ack_crc32"] == got["crc32"] == expected_crc
@@ -89,11 +104,11 @@ def summarize(run, *, check_values=True):
         previous = sample["end_s"]
     need(run["cleanup"] == {"exitcodes": [0, 0], "forced_termination": False,
                            "all_workers_exited": True, "control_readers_exited": True,
-                           "segment_unlinked": True if mode == "shared" else None}, "Cleanup incomplete")
+                           "segment_unlinked": True if mode in ("shared", "pool") else None}, "Cleanup incomplete")
     sums = [s["producer_rss_bytes"] + s["consumer_rss_bytes"] for s in samples]
     gaps = [samples[0]["start_s"] - window["start_s"], window["end_s"] - samples[-1]["start_s"]]
     gaps += [b["start_s"] - a["start_s"] for a, b in zip(samples, samples[1:])]
-    return {"verified_messages": count, "verified_payload_bytes": size * count,
+    result = {"verified_messages": count, "verified_payload_bytes": size * count,
             "duration_s": duration, "messages_per_s": count / duration,
             "payload_mib_per_s": size * count / duration / 1048576,
             "round_trip_ms": distribution(latencies), "producer_cpu_s": producer["cpu_s"],
@@ -101,6 +116,18 @@ def summarize(run, *, check_values=True):
             "peak_paired_rss_bytes": max(sums), "rss_sample_count": len(samples),
             "max_rss_gap_ms": max(gaps) * 1000,
             "max_paired_read_ms": max(s["end_s"] - s["start_s"] for s in samples) * 1000}
+    if streaming:
+        outstanding = peak = 0
+        for _, delta in sorted(events):
+            outstanding += delta
+            peak = max(peak, outstanding)
+            need(0 <= outstanding <= capacity, "Capacity exceeded or invalid ownership trace")
+        need(outstanding == 0, "Undrained pool")
+        result.update(capacity=capacity, slot_bytes=capacity * size,
+                      peak_owned_slots=peak,
+                      capacity_wait_count=sum(r["waited_for_capacity"] for r in rows),
+                      capacity_wait_s=sum(r["acquire_wait_s"] for r in rows))
+    return result
 
 
 def default_count(size):

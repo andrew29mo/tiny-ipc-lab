@@ -1,4 +1,6 @@
-# Protocol and measurement contract
+# Legacy protocol and measurement contract
+
+This page describes the retained schema-2 stop-and-wait profiles. See [the current pool contract](POOL.md) for bounded loans, in-place writes, five-profile comparisons and explicit slow-consumer cases.
 
 ## Workload
 

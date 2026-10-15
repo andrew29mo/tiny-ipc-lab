@@ -12,6 +12,7 @@ dependencies = ["numpy==1.26.4", "psutil==7.0.0"]
 
 [project.scripts]
 tiny-ipc-lab = "tiny_ipc_lab.cli:main"
+tiny-ipc-lab-pool = "tiny_ipc_lab.pool_bench:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

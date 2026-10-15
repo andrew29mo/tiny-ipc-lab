@@ -18,6 +18,7 @@ import numpy as np
 import psutil
 
 from .protocol import Sender, Receiver, WARMUP, arrays, check_config, fill, crc
+from .pool import PoolSender, PoolReceiver, check_capacity
 
 
 def fingerprint(value):
@@ -34,18 +35,27 @@ def highwater():
     return int(value if sys.platform == "darwin" else value * 1024)
 
 
-def producer(data, control, mode, payload_bytes, count, name, pipe_receive):
+def producer(data, control, mode, payload_bytes, count, name, pipe_receive, capacity=1, consumer_delay_s=0.):
     block = sender = None
     try:
         block = SharedMemory(name=name) if name else None
-        base, frame = arrays(payload_bytes)
-        sender = Sender(data, mode, payload_bytes, block)
+        streaming = mode in ("pool", "window_pipe")
+        base, frame = arrays(payload_bytes) if not streaming else (np.arange(payload_bytes // 4, dtype=np.float32), None)
+        sender = PoolSender(data, payload_bytes, capacity, block) if streaming else Sender(data, mode, payload_bytes, block)
         control.send({"event": "ready"})
         if control.recv() != "warmup":
             raise RuntimeError("Expected warmup command")
         for seq in range(WARMUP):
-            fill(base, frame, seq)
-            sender.exchange(seq, frame, crc(frame))
+            if streaming:
+                loan, target = sender.acquire(seq)
+                fill(base, target, seq)
+                sender.publish(loan, crc(target))
+                del target
+            else:
+                fill(base, frame, seq)
+                sender.exchange(seq, frame, crc(frame))
+        if streaming:
+            sender.drain()
         control.send({"event": "warm"})
         if control.recv() != "start":
             raise RuntimeError("Expected start command")
@@ -53,6 +63,12 @@ def producer(data, control, mode, payload_bytes, count, name, pipe_receive):
         cpu_start = time.process_time()
         start = time.perf_counter()
         for seq in range(WARMUP, WARMUP + count):
+            if streaming:
+                loan, target = sender.acquire(seq)
+                fill(base, target, seq)  # Direct write into the owned slot; no staging frame/copy.
+                sender.publish(loan, crc(target))
+                del target
+                continue
             before = time.perf_counter()
             fill(base, frame, seq)
             expected_crc = crc(frame)
@@ -60,6 +76,8 @@ def producer(data, control, mode, payload_bytes, count, name, pipe_receive):
             after = time.perf_counter()
             records.append({"sequence": seq, "start_s": before, "end_s": after,
                             "input_crc32": expected_crc, "ack_crc32": actual_crc})
+        if streaming:
+            records = sender.drain()
         end = time.perf_counter()
         control.send({"event": "done", "start_s": start, "end_s": end,
                       "cpu_s": time.process_time() - cpu_start, "high_water_rss_bytes": highwater(),
@@ -74,18 +92,23 @@ def producer(data, control, mode, payload_bytes, count, name, pipe_receive):
         raise
     finally:
         if sender is not None:
+            target = None
+            sender.loan_view = None
             sender.view = None
+            if hasattr(sender, "views"):
+                sender.views = None
         if block is not None:
             block.close()
         data.close()
         control.close()
 
 
-def consumer(data, control, mode, payload_bytes, count, name, pipe_receive):
+def consumer(data, control, mode, payload_bytes, count, name, pipe_receive, capacity=1, consumer_delay_s=0.):
     block = receiver = None
     try:
         block = SharedMemory(name=name) if name else None
-        receiver = Receiver(data, mode, payload_bytes, block, pipe_receive)
+        streaming = mode in ("pool", "window_pipe")
+        receiver = PoolReceiver(data, payload_bytes, capacity, block, pipe_receive, consumer_delay_s) if streaming else Receiver(data, mode, payload_bytes, block, pipe_receive, consumer_delay_s)
         control.send({"event": "ready"})
         for seq in range(WARMUP):
             receiver.receive(seq)
@@ -93,9 +116,12 @@ def consumer(data, control, mode, payload_bytes, count, name, pipe_receive):
         records = []
         cpu_start = time.process_time()
         for seq in range(WARMUP, WARMUP + count):
-            observed_crc = receiver.receive(seq)
-            records.append({"sequence": seq, "crc32": observed_crc,
-                            "verified_elements": payload_bytes // 4})
+            value = receiver.receive(seq)
+            observed_crc = value[0] if streaming else value
+            row = {"sequence": seq, "crc32": observed_crc, "verified_elements": payload_bytes // 4}
+            if streaming:
+                row.update(slot=value[1], generation=value[2])
+            records.append(row)
         end = time.perf_counter()
         control.send({"event": "done", "end_s": end, "cpu_s": time.process_time() - cpu_start,
                       "high_water_rss_bytes": highwater(), "records": records})
@@ -110,6 +136,8 @@ def consumer(data, control, mode, payload_bytes, count, name, pipe_receive):
     finally:
         if receiver is not None:
             receiver.view = None
+            if hasattr(receiver, "views"):
+                receiver.views = None
         if block is not None:
             block.close()
         data.close()
@@ -122,8 +150,13 @@ class TrialFailure(RuntimeError):
         self.cleanup = cleanup
 
 
-def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _on_warm=None):
+def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _on_warm=None, capacity=1, consumer_delay_s=0.):
     check_config(mode, payload_bytes, count)
+    check_capacity(capacity)
+    if mode not in ("pool", "window_pipe") and capacity != 1:
+        raise ValueError("Legacy stop-and-wait requires capacity=1")
+    if type(consumer_delay_s) not in (int, float) or not 0 <= consumer_delay_s <= .05:
+        raise ValueError("Consumer delay must be 0..0.05 seconds")
     if pipe_receive not in ("into", "bytes") or type(timeout) not in (int, float) or not 0 < timeout <= 300:
         raise ValueError("Invalid trial timeout")
     context = mp.get_context("spawn")
@@ -135,7 +168,7 @@ def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _
     cleanup = {}
     deadline = time.monotonic() + timeout
     try:
-        block = SharedMemory(create=True, size=payload_bytes) if mode == "shared" else None
+        block = SharedMemory(create=True, size=payload_bytes * capacity) if mode in ("shared", "pool") else None
         name = block.name if block else None
         left, right = context.Pipe()
         connections.extend((left, right))
@@ -144,7 +177,7 @@ def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _
             connections.extend((parent, child))
             controls.append(parent)
             child_controls.append(child)
-        workers = [context.Process(target=target, args=(data, ctl, mode, payload_bytes, count, name, pipe_receive))
+        workers = [context.Process(target=target, args=(data, ctl, mode, payload_bytes, count, name, pipe_receive, capacity, consumer_delay_s))
                    for target, data, ctl in zip((producer, consumer), (left, right), child_controls)]
         for worker in workers:
             worker.start()
@@ -207,6 +240,7 @@ def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _
         for ctl in controls:
             ctl.send("close")
         result = {"mode": mode, "pipe_receive": pipe_receive, "payload_bytes": payload_bytes, "count": count, "warmup": WARMUP,
+                  "capacity": capacity, "consumer_delay_s": consumer_delay_s,
                   "producer": p_result, "consumer": c_result, "rss_samples": samples,
                   "memory_window": {"start_s": window_start, "end_s": window_end},
                   "environment": {"python": platform.python_version(), "numpy": np.__version__,
@@ -255,7 +289,7 @@ def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _
         raise TrialFailure(type(failure).__name__ + ": " + str(failure), cleanup) from failure
     if cleanup != {"exitcodes": [0, 0], "forced_termination": False, "all_workers_exited": True,
                    "control_readers_exited": True,
-                   "segment_unlinked": True if mode == "shared" else None}:
+                   "segment_unlinked": True if mode in ("shared", "pool") else None}:
         raise TrialFailure("Unclean worker or shared-memory exit", cleanup)
     result["cleanup"] = cleanup
     return result

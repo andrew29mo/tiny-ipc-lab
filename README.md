@@ -1,10 +1,10 @@
 # Tiny IPC Lab
 
-A single-machine verification bench for transferring float32 tensors between two processes using **Pipe raw bytes** or **one reusable shared-memory buffer**.
+A single-machine verification bench for transferring float32 tensors between two processes using **Pipe raw bytes**, **one reusable shared-memory buffer**, or a **bounded pool of loaned buffers filled in place**.
 
-The question is: **At what payload sizes does sharing a buffer justify its ownership and cleanup complexity?** This project measures a complete verified round trip, including real data generation, copies, validation and acknowledgements. It does not assume a shared-memory speedup.
+The question is: **When do shared buffers, in-place generation and a bounded window justify their ownership and cleanup complexity?** This project measures a complete verified round trip, including real data generation, copies, validation and acknowledgements. It does not assume a shared-memory speedup.
 
-## MVP
+## Legacy single-buffer baselines
 
 - One spawned producer, one spawned consumer, and an external controller that samples RSS and owns cleanup.
 - One payload in flight in both modes. A sequence/length header and sequence/CRC acknowledgement travel over the same kind of Pipe.
@@ -13,6 +13,39 @@ The question is: **At what payload sizes does sharing a buffer justify its owner
 - Every value must exactly match an independently generated expected tensor before acknowledgement. CRC32 provides additional sender/receiver/evidence accounting.
 - Tests exercise stale/repeated/skipped sequences, middle-value corruption, short payloads, premature buffer reuse, wrong acknowledgements, real worker crashes, stalled workers and shared-segment cleanup.
 - Lossless compressed raw observations, independently regenerated expected CRCs, canonical JSON/HTML/README, and alternating paired trials.
+
+## Bounded pool experiment
+
+The production pool has a fixed slot capacity, direct writes into borrowed slots, sequence/slot/generation identities and ACK-controlled ownership. A full pool waits for a valid release; it does not expand, overwrite or drop. Consumer views and published loan views are read-only API guards.
+
+The new experiment compares five profiles using identical data, validation and counts: existing Pipe, existing copied single buffer, in-place pool capacity 1, pool capacity 4, and a **capacity-4 Pipe control using the same loan protocol**. The equal-window control prevents attributing all pipelining gains to shared memory. Slow-consumer cases deliberately delay each measured ACK by 1 ms; all modes use the same delay.
+
+```sh
+python -m tiny_ipc_lab.pool_bench --output results/local/pool
+python tools/check_project.py --directory results/local/pool
+# Actual-process smoke with a non-divisible tail window:
+python -m tiny_ipc_lab.pool_bench --output results/local/pool-smoke --sizes 64 4096 --blocks 2 --capacity 3 --smoke
+python tools/check_project.py --directory results/local/pool-smoke --smoke
+```
+
+[Current pool JSON/HTML and raw evidence](results/macos-arm64-pool/README.md) retain every block. See the [pool ownership, fairness and measurement contract](docs/POOL.md). These are closed-loop verified exchanges, not a shared external arrival schedule or pure transport bandwidth. Per-message completion latency includes loan waiting and producer ACK collection; a larger window can improve throughput while worsening completion latency. Payload slots are bounded, while evidence records still grow with the finite message count.
+
+<!-- POOL_RESULTS_START -->
+The primary run retains **200 trials and 654,450 verified tensors** across six normal sizes and two slow-consumer cases. Five rotating blocks include every profile at every order position.
+
+| Case | Pool 4 / copied single buffer | Pool 4 / equal-window Pipe |
+|---|---:|---:|
+| 64 B, normal | 2.096 [1.240, 2.634] | 1.020 [0.745, 1.429] |
+| 1 MiB, normal | 2.309 [1.341, 3.489] | 8.399 [5.881, 8.518] |
+| 4 MiB, normal | 1.483 [0.833, 2.381] | 5.921 [3.527, 9.319] |
+| 1 MiB, 1 ms delayed ACK | 1.086 [1.074, 1.405] | 1.678 [1.606, 1.734] |
+
+Ratios are medians [observed min, max] of all five within-block throughput ratios, not confidence intervals or ratios of table medians.
+
+At 1 MiB normal load, copied single-buffer versus pool-4 median per-trial p95 completion latency is **0.374 vs 0.699 ms**; maximum sampled paired RSS is **84.28 vs 89.39 MiB**. Throughput gains can trade off latency and resident memory. These RSS maxima are not paired physical-memory savings.
+
+A development run overlapped local tests near its end. It is [retained separately](results/macos-arm64-pool-development/README.md) and excluded from primary findings because of known interference, not a performance threshold. The full primary grid was then executed once without concurrent test/validation processes launched by this task; OS/desktop interference remains uncontrolled.
+<!-- POOL_RESULTS_END -->
 
 ## Run
 
@@ -39,15 +72,17 @@ python tools/check_project.py --directory results/local/smoke --smoke
 
 Output directories must be new. Completed raw trials survive a later failure; an incomplete index and supervised-failure cleanup metadata are retained, without inventing the failed trial's missing observations. Custom sizes/counts are explicitly recorded; they are not the retained full-grid experiment.
 
-## Measurements and limits
+## Historical measurements and limits
+
+The following schema-2 observations belong to immutable revision `c91bfef`, before the pool extension. They remain verified using that revision’s original source and checker. New measurements are reported separately above.
 
 [Original receive-into API profile](results/macos-arm64/README.md) and [public receive-bytes plus copy profile](results/macos-arm64-pipe-bytes/README.md) each retain six sizes, four alternating pairs, 207,360 measured tensors (7.066 GiB) and their own JSON/HTML/raw records. All 96 revised trials remain visible. The profiles were executed sequentially, each with alternating mode order; differences between profiles are sensitivity observations, not an independently randomized causal API-ranking experiment.
 
-The revised Apple M5 Pro / Python 3.12.14 1 MiB shared/Pipe throughput ratios are 4.411 [3.833, 4.551] for receive-into and 4.186 [2.361, 4.307] for receive-bytes plus copy: medians [observed min, max] over all four pairs, not confidence intervals or ratios of table medians. Small payloads include pairs favoring either mode. The benefit remains conditional on this protocol, validation workload, host and runtime; it is not pure transport bandwidth, a universal crossover or production speedup.
+The `c91bfef` Apple M5 Pro / Python 3.12.14 1 MiB shared/Pipe throughput ratios are 4.411 [3.833, 4.551] for receive-into and 4.186 [2.361, 4.307] for receive-bytes plus copy: medians [observed min, max] over all four pairs, not confidence intervals or ratios of table medians. Small payloads include pairs favoring either mode. The benefit remains conditional on this protocol, validation workload, host and runtime; it is not pure transport bandwidth, a universal crossover or production speedup.
 
 The original approximately 4.10x observation remains a valid descriptive median of every original 1 MiB pair. The [immutable-source/data review](reviews/README.md) reopens commit `d2ca56d` and rechecks all 48 original raw trials and 207,360 messages. Original timings are not relabeled as measurements of this revision.
 
-The [RSS diagnosis](reviews/rss-diagnosis.md) reproduces 4 MiB receive-into growth with both NumPy and bytearray targets, low traced live allocations and a plateau. Three rounds show that disabling macOS's large-allocation cache in the diagnostic child eliminates the growth; GC does not. This supports retention of freed temporary receive buffers by that cache as the main cause on this host/runtime, rather than accumulated live tensors. The public receive-bytes plus copy control also avoids the growth without an allocator override. In revised formal trials, the maximum paired sampled RSS at 4 MiB is 358.52 MiB for receive-into Pipe, versus 107.28 MiB for receive-bytes Pipe. These separate maxima are not paired physical-memory savings. No tracing, GC or allocator override is inserted into either formal timing profile. See [review evidence](reviews/README.md) for the source inspection, raw controls and limits.
+The [RSS diagnosis](reviews/rss-diagnosis.md) reproduces 4 MiB receive-into growth with both NumPy and bytearray targets, low traced live allocations and a plateau. Three rounds show that disabling macOS's large-allocation cache in the diagnostic child eliminates the growth; GC does not. This supports retention of freed temporary receive buffers by that cache as the main cause on this host/runtime, rather than accumulated live tensors. The public receive-bytes plus copy control also avoids the growth without an allocator override. In the `c91bfef` formal trials, the maximum paired sampled RSS at 4 MiB is 358.52 MiB for receive-into Pipe, versus 107.28 MiB for receive-bytes Pipe. These separate maxima are not paired physical-memory savings. No tracing, GC or allocator override is inserted into either formal timing profile. See [review evidence](reviews/README.md) for the source inspection, raw controls and limits.
 
 Tables show median per-trial payload throughput and RTT percentiles, median warm baseline RSS, maximum paired sampled RSS and actual maximum sampling gap. Ratios and all underlying pairs are stored and verified in schema-2 JSON and rendered in HTML/README; no outlier/passing-only subset is selected.
 
@@ -57,7 +92,7 @@ RSS samples add near-contemporaneous observations of producer and consumer. They
 
 Workers stay alive until after a forced final sample. Dedicated control-reader threads keep a partially written result from blocking the controller's deadline checks. The controller reaps workers/readers, closes Pipe/Process/shared-memory handles, unlinks its segment and verifies that its name cannot be reopened, including startup-allocation failure paths. Tests independently reopen captured names after actual worker kills, exercise a real partial result, and check descriptor counts across repeated trials. This covers controller-managed normal/worker-failure exit, not killing the controller or power failure.
 
-These are warm, finite, single-host observations with fixed size order, uncontrolled caches/thermals and no CPU pinning. Neither a universal speedup, production capacity nor a memory-efficiency ranking follows from them. This MVP has no pipelined ring, multiple producers, lock-free algorithm, network transfer or GPU path.
+These are warm, finite, single-host observations with fixed size order, uncontrolled caches/thermals and no CPU pinning. Neither a universal speedup, production capacity nor a memory-efficiency ranking follows from them. The historical profiles have one payload in flight. The current pool adds a bounded SPSC window; multiple producers, lock-free operation, network transfer and GPUs remain outside scope.
 
 ## Verify
 
@@ -65,15 +100,16 @@ These are warm, finite, single-host observations with fixed size order, uncontro
 python -m unittest discover -s tests -v
 python -O -m unittest discover -s tests
 python tools/run_mutations.py
+python tools/check_project.py --directory results/macos-arm64-pool
 python tools/check_project.py
 python tools/check_project.py --directory results/macos-arm64-pipe-bytes
 python tools/diagnose_rss.py --verify
 python tools/audit_original.py --verify
 ```
 
-Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Five deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. Linux/macOS CI also executes real-process smoke measurements; their timings are not performance gates.
+Tests call the production sender/receiver, actual spawn-process supervisor, benchmark and report verifier. A hand-calculated metric oracle checks latency, complete-trial duration and paired RSS. Deliberately forged consistent CRCs, summaries and file digests must still fail independent data regeneration. Nine deliberate protocol source faults must fail behavioral assertions rather than import/hash checks. Linux/macOS CI also executes real-process smoke measurements; their timings are not performance gates.
 
-Historical verification needs full Git history. The diagnostic verifier checks retained controls rather than rerunning instrumented probes in CI. Both public receive API profiles also get actual-process smoke tests in CI.
+Historical verification needs full Git history. The diagnostic verifier checks retained controls rather than rerunning instrumented probes in CI. Both public receive API profiles and the five-profile pool comparison get actual-process smoke tests in CI.
 
 See [methodology](docs/METHODOLOGY.md), [related systems and next experiments](docs/RELATED_WORK.md), [security scope](SECURITY.md) and [third-party materials](THIRD_PARTY_NOTICES.md).
 

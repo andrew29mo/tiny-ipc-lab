@@ -34,6 +34,8 @@ jobs:
         run: python tools/run_mutations.py
       - name: Full retained evidence and publication hygiene
         run: |
+          python tools/check_project.py --directory results/macos-arm64-pool
+          python tools/check_project.py --directory results/macos-arm64-pool-development
           python tools/check_project.py
           python tools/check_project.py --directory results/macos-arm64-pipe-bytes
           python tools/diagnose_rss.py --verify
@@ -44,3 +46,5 @@ jobs:
           python tools/check_project.py --directory results/local/ci --smoke
           tiny-ipc-lab --pipe-receive bytes --output results/local/ci-bytes --sizes 64 4096 --count 17 --pairs 2
           python tools/check_project.py --directory results/local/ci-bytes --smoke
+          python -m tiny_ipc_lab.pool_bench --output results/local/ci-pool --sizes 64 4096 --blocks 2 --capacity 3 --smoke
+          python tools/check_project.py --directory results/local/ci-pool --smoke

@@ -9,6 +9,10 @@ import subprocess
 
 from tiny_ipc_lab.cli import DEFAULT_SIZES
 from tiny_ipc_lab.report import verify, render, overview
+from tiny_ipc_lab.experiment import source_hash
+from tiny_ipc_lab import pool_bench
+from verify_legacy import verify_legacy, SOURCE
+from pool_findings import check as check_findings
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,12 +20,25 @@ ROOT = Path(__file__).resolve().parents[1]
 def check(directory, smoke=False):
     directory = Path(directory)
     report = json.loads((directory / "report.json").read_text())
-    verify(report, directory)
-    if not smoke and (report["pairs"] != 4 or report["count_override"] is not None
-                      or [c["payload_bytes"] for c in report["cases"]] != DEFAULT_SIZES):
-        raise ValueError("Recorded experiment is not the fixed full grid")
-    if ((directory / "report.html").read_text() != render(report)
-            or (directory / "README.md").read_text() != overview(report)
+    if report["schema_version"] == 2 and report["source_sha256"] == SOURCE and report["source_sha256"] != source_hash():
+        verify_legacy(directory)
+        return
+    if report["schema_version"] == 3:
+        pool_bench.verify(report, directory)
+        canonical_html, canonical_readme = pool_bench.render(report), pool_bench.overview(report)
+        if directory.resolve() == ROOT / "results/macos-arm64-pool":
+            check_findings(report)
+        if not smoke and (report["blocks"] != 5 or report["smoke"] or report["pool_capacity"] != 4
+                          or [c["payload_bytes"] for c in report["cases"] if c["consumer_delay_s"] == 0.] != DEFAULT_SIZES):
+            raise ValueError("Pool evidence is not the fixed full grid")
+    else:
+        verify(report, directory)
+        canonical_html, canonical_readme = render(report), overview(report)
+        if not smoke and (report["pairs"] != 4 or report["count_override"] is not None
+                          or [c["payload_bytes"] for c in report["cases"]] != DEFAULT_SIZES):
+            raise ValueError("Recorded experiment is not the fixed full grid")
+    if ((directory / "report.html").read_text() != canonical_html
+            or (directory / "README.md").read_text() != canonical_readme
             or (directory / "report.json").read_text() != json.dumps(report, separators=(",", ":"), allow_nan=False) + "\n"):
         raise ValueError("JSON/HTML/README differs from retained evidence")
     print("Verified every sequence/value CRC, timing/RSS statistic, clean exit, fair workload and canonical JSON/HTML/README.")
@@ -38,7 +55,7 @@ def publication():
             raise ValueError("Private or linked file: " + name)
         data = path.read_bytes()
         if name.endswith(".gz"):
-            if not re.fullmatch(r"results/macos-arm64(?:-pipe-bytes)?/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)\.json\.gz", name):
+            if not re.fullmatch(r"results/(?:macos-arm64(?:-pipe-bytes)?/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)|macos-arm64-pool(?:-development)?/raw/case-[0-9]+-block-[0-9]+-(?:pipe|shared|pool_1|pool_n|window_pipe))\.json\.gz", name):
                 raise ValueError("Unexpected compressed file")
             data = gzip.decompress(data)
         if b"\0" in data or private.search(data) or secret.search(data):

@@ -1,13 +1,14 @@
 """One acknowledged payload in flight; acknowledgement returns buffer ownership."""
 
 import struct
+import time
 import zlib
 
 import numpy as np
 
 HEADER = struct.Struct("!QQ")  # Sequence, payload byte count. One fixed slot.
 ACK = struct.Struct("!QI")  # Sequence, CRC32 of the fully checked received values.
-MODES = ("pipe", "shared")
+MODES = ("pipe", "shared", "pool", "window_pipe")
 WARMUP = 8
 RECIPE = "float32 arange(elements) + sequence; exact equality; seq starts at zero"
 
@@ -20,7 +21,7 @@ def check_config(mode, payload_bytes, count):
     if (mode not in MODES or type(payload_bytes) is not int or payload_bytes % 4
             or not 4 <= payload_bytes <= 16 * 1024 * 1024
             or type(count) is not int or not 1 <= count <= 16384):
-        raise ValueError("Require pipe/shared, 4..16 MiB divisible by four, count 1..16384")
+        raise ValueError("Require pipe/shared/pool/window_pipe, 4..16 MiB divisible by four, count 1..16384")
 
 
 def arrays(payload_bytes):
@@ -62,11 +63,12 @@ class Sender:
 
 
 class Receiver:
-    def __init__(self, connection, mode, payload_bytes, block=None, pipe_receive="into"):
+    def __init__(self, connection, mode, payload_bytes, block=None, pipe_receive="into", consumer_delay_s=0.):
         check_config(mode, payload_bytes, 1)
         if pipe_receive not in ("into", "bytes"):
             raise ValueError("Unknown Pipe receive API")
         self.pipe_receive = pipe_receive
+        self.consumer_delay_s = consumer_delay_s
         self.connection, self.mode, self.payload_bytes = connection, mode, payload_bytes
         self.base, self.expected = arrays(payload_bytes)
         self.view = (np.ndarray(self.base.shape, dtype=np.float32, buffer=block.buf)
@@ -95,5 +97,7 @@ class Receiver:
         if not np.array_equal(self.view, self.expected):
             raise ProtocolError("Tensor differs from independently generated expected values")
         observed_crc = crc(self.view)
+        if expected_sequence >= WARMUP and self.consumer_delay_s:
+            time.sleep(self.consumer_delay_s)
         self.connection.send_bytes(ACK.pack(expected_sequence, observed_crc))
         return observed_crc
