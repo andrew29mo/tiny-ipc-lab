@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 requires-python = ">=3.12,<3.13"
-dependencies = ["numpy==1.26.4", "psutil==7.0.0"]
+dependencies = ["numpy==2.5.4", "psutil==7.0.0"]
 
 [project.scripts]
 tiny-ipc-lab = "tiny_ipc_lab.cli:main"
