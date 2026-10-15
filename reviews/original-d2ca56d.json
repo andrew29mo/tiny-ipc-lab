@@ -1,0 +1,82 @@
+{
+  "original_commit": "d2ca56def790fd4877c4ef62d4496e05c5123a20",
+  "original_report_sha256": "8700ac142a1664928c60a3e312fb972060be4f829bf0b6992d93e220829309b6",
+  "original_source_sha256": "4e416bc03ffc70675df52b411a4929a36303002ed5aff1b72aa882db302e8753",
+  "verified_messages": 207360,
+  "verified_raw_files": 48,
+  "cases": [
+    {
+      "payload_bytes": 64,
+      "all_pair_ratios": [
+        1.3120392285083282,
+        0.9880705307549849,
+        1.0656332541274693,
+        0.7254228563986479
+      ],
+      "median": 1.026851892441227,
+      "min": 0.7254228563986479,
+      "max": 1.3120392285083282
+    },
+    {
+      "payload_bytes": 1024,
+      "all_pair_ratios": [
+        1.1948659002549822,
+        1.0642962719143456,
+        1.1560050989326385,
+        1.4000038460348014
+      ],
+      "median": 1.1754354995938103,
+      "min": 1.0642962719143456,
+      "max": 1.4000038460348014
+    },
+    {
+      "payload_bytes": 16384,
+      "all_pair_ratios": [
+        1.7110799629148703,
+        1.7663833645201517,
+        1.6577024857035045,
+        1.989145139903751
+      ],
+      "median": 1.738731663717511,
+      "min": 1.6577024857035045,
+      "max": 1.989145139903751
+    },
+    {
+      "payload_bytes": 262144,
+      "all_pair_ratios": [
+        3.6823359301561522,
+        3.6442060914244667,
+        2.8853745636586803,
+        2.389297959985452
+      ],
+      "median": 3.2647903275415735,
+      "min": 2.389297959985452,
+      "max": 3.6823359301561522
+    },
+    {
+      "payload_bytes": 1048576,
+      "all_pair_ratios": [
+        4.575007119293442,
+        3.734958198463514,
+        4.467805600215149,
+        3.701384317302472
+      ],
+      "median": 4.101381899339332,
+      "min": 3.701384317302472,
+      "max": 4.575007119293442
+    },
+    {
+      "payload_bytes": 4194304,
+      "all_pair_ratios": [
+        4.907095727671897,
+        5.118613914231397,
+        2.0228015217299102,
+        5.9021517991839945
+      ],
+      "median": 5.012854820951647,
+      "min": 2.0228015217299102,
+      "max": 5.9021517991839945
+    }
+  ],
+  "assessment": "The original approximately 4.10x is the median of every paired ratio at 1 MiB under recv_bytes_into. It is a valid descriptive observation of that API/workload on one host, not a universal shared-memory effect or a raw-transport benchmark. Original RSS includes runtime allocator retention; it is not a paired unique-memory saving estimate. Revised measurements remain separate."
+}

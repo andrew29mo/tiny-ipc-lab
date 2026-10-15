@@ -62,12 +62,17 @@ class Sender:
 
 
 class Receiver:
-    def __init__(self, connection, mode, payload_bytes, block=None):
+    def __init__(self, connection, mode, payload_bytes, block=None, pipe_receive="into"):
         check_config(mode, payload_bytes, 1)
+        if pipe_receive not in ("into", "bytes"):
+            raise ValueError("Unknown Pipe receive API")
+        self.pipe_receive = pipe_receive
         self.connection, self.mode, self.payload_bytes = connection, mode, payload_bytes
         self.base, self.expected = arrays(payload_bytes)
         self.view = (np.ndarray(self.base.shape, dtype=np.float32, buffer=block.buf)
                      if mode == "shared" else np.empty_like(self.base))
+        if mode == "shared":
+            self.view.setflags(write=False)  # Consumer API guard; not OS permission/tenant isolation.
 
     def receive(self, expected_sequence):
         if not self.connection.poll(10):
@@ -75,8 +80,16 @@ class Receiver:
         header = self.connection.recv_bytes(HEADER.size)
         if len(header) != HEADER.size or HEADER.unpack(header) != (expected_sequence, self.payload_bytes):
             raise ProtocolError("Unexpected sequence or payload length")
-        if self.mode == "pipe" and self.connection.recv_bytes_into(self.view) != self.payload_bytes:
-            raise ProtocolError("Short payload")
+        if self.mode == "pipe":
+            if self.pipe_receive == "into":
+                if self.connection.recv_bytes_into(self.view) != self.payload_bytes:
+                    raise ProtocolError("Short payload")
+            else:
+                raw = self.connection.recv_bytes(self.payload_bytes)
+                if len(raw) != self.payload_bytes:
+                    raise ProtocolError("Short payload")
+                np.copyto(self.view, np.frombuffer(raw, dtype=np.float32))
+                del raw  # Public API sensitivity control; no private Connection calls.
         fill(self.base, self.expected, expected_sequence)
         # CRC alone is not the correctness oracle: check every tensor value first.
         if not np.array_equal(self.view, self.expected):

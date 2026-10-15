@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
+          fetch-depth: 0  # Historical audit reopens the immutable original source and raw trials.
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
@@ -32,8 +33,14 @@ jobs:
       - name: Behavioral source faults
         run: python tools/run_mutations.py
       - name: Full retained evidence and publication hygiene
-        run: python tools/check_project.py
+        run: |
+          python tools/check_project.py
+          python tools/check_project.py --directory results/macos-arm64-pipe-bytes
+          python tools/diagnose_rss.py --verify
+          python tools/audit_original.py --verify
       - name: Actual IPC smoke, not a performance gate
         run: |
           tiny-ipc-lab --output results/local/ci --sizes 64 4096 --count 17 --pairs 2
           python tools/check_project.py --directory results/local/ci --smoke
+          tiny-ipc-lab --pipe-receive bytes --output results/local/ci-bytes --sizes 64 4096 --count 17 --pairs 2
+          python tools/check_project.py --directory results/local/ci-bytes --smoke

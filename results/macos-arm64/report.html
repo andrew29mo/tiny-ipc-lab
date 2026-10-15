@@ -1,9 +1,10 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tiny IPC Lab measurements</title><style>body{font:16px/1.6 system-ui;max-width:1200px;margin:36px auto;padding:0 20px;background:#f5f7fa;color:#162638}section{background:white;padding:22px;margin:18px 0;border:1px solid #dce4ec;border-radius:10px}table{border-collapse:collapse;white-space:nowrap}td,th{padding:9px;border-bottom:1px solid #ddd;text-align:right}.scroll{overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
-<h1>Tiny IPC Lab</h1><p>2026-10-15T10:09:43.373939+00:00 · 4 alternating fresh-process pairs per size · float32 tensors</p>
-<section><h2>Verified end-to-end round trips</h2><p>Median per-trial payload throughput, RTT percentiles and warm baseline RSS; maximum paired sampled RSS and sampling gap. Every message is fully checked. One acknowledged payload is in flight in both modes. Shared mode includes a producer-to-shared-buffer copy; Pipe mode uses raw bytes with a preallocated receive array. These are descriptive observations, not pure-transport or universal speedup claims.</p><div class="scroll"><table><tr><th>Payload bytes</th><th>Mode</th><th>Messages/trial</th><th>Payload MiB/s</th><th>RTT p50 ms</th><th>RTT p95 ms</th><th>Warm baseline RSS MiB</th><th>Peak paired RSS MiB</th><th>Max RSS gap ms</th></tr><tr><td>64</td><td>pipe</td><td>8192</td><td>2.28</td><td>0.0214</td><td>0.0493</td><td>77.56</td><td>84.20</td><td>8.665</td></tr><tr><td>64</td><td>shared</td><td>8192</td><td>2.35</td><td>0.0185</td><td>0.0443</td><td>77.57</td><td>84.45</td><td>9.440</td></tr><tr><td>1024</td><td>pipe</td><td>8192</td><td>32.49</td><td>0.0245</td><td>0.0546</td><td>77.60</td><td>84.28</td><td>8.728</td></tr><tr><td>1024</td><td>shared</td><td>8192</td><td>38.51</td><td>0.0202</td><td>0.0476</td><td>77.70</td><td>84.61</td><td>9.014</td></tr><tr><td>16384</td><td>pipe</td><td>8192</td><td>308.56</td><td>0.0412</td><td>0.0796</td><td>77.80</td><td>84.78</td><td>8.753</td></tr><tr><td>16384</td><td>shared</td><td>8192</td><td>557.22</td><td>0.0224</td><td>0.0528</td><td>77.62</td><td>84.72</td><td>8.609</td></tr><tr><td>262144</td><td>pipe</td><td>1024</td><td>747.63</td><td>0.2851</td><td>0.5518</td><td>79.12</td><td>80.39</td><td>6.928</td></tr><tr><td>262144</td><td>shared</td><td>1024</td><td>2400.83</td><td>0.1019</td><td>0.1529</td><td>78.90</td><td>79.80</td><td>7.028</td></tr><tr><td>1048576</td><td>pipe</td><td>256</td><td>852.78</td><td>1.0492</td><td>1.5710</td><td>84.31</td><td>85.91</td><td>6.699</td></tr><tr><td>1048576</td><td>shared</td><td>256</td><td>3198.52</td><td>0.2882</td><td>0.3941</td><td>83.68</td><td>84.09</td><td>6.570</td></tr><tr><td>4194304</td><td>pipe</td><td>64</td><td>823.65</td><td>4.4610</td><td>6.3400</td><td>134.67</td><td>358.30</td><td>9.573</td></tr><tr><td>4194304</td><td>shared</td><td>64</td><td>3744.14</td><td>1.0020</td><td>1.1924</td><td>103.29</td><td>104.44</td><td>6.491</td></tr></table></div></section>
-<section><h2>Scope and limitations</h2><ul><li>Single producer, single consumer, spawn processes, one acknowledged payload in flight, one fixed shared slot; no pipelining or lock-free claim.</li><li>Pipe uses send_bytes/recv_bytes_into with a preallocated receive array, not pickled arrays. Shared mode copies the producer array into shared memory and sends the same sequence/length header over a Pipe. Both return the same sequence/CRC acknowledgement.</li><li>Every received tensor is checked by exact value equality against independently generated expected values before acknowledgement. CRC32 is additional accounting, not the sole correctness check.</li><li>Measured round trip includes float32 payload generation, producer CRC, shared copy or Pipe transfer, receiver expected-value generation/full validation/CRC and acknowledgement. Overall throughput also includes per-message record keeping. This is not pure transport, a model inference benchmark or a zero-copy end-to-end claim.</li><li>Eight identical warmups precede measurement. Fresh processes and alternating mode order are used per pair; startup is excluded. Fixed size order, shared-host interference, allocator state, caches and thermals remain uncontrolled. Finite single-host observations are descriptive, not confidence intervals or universal speedups.</li><li>The controller samples producer/consumer RSS sequentially at a requested 5 ms cadence, with actual gaps and read duration retained. Paired RSS can double-count shared pages and miss spikes. Warm baseline, input/reference arrays, record buffers and result serialization are included; controller/resource-tracker memory is excluded. It is not unique physical RAM or total deployment memory.</li><li>Workers stay alive after measurement until the controller takes the final sample. The controller closes/unlinks its owned segment after workers exit and probes that its name cannot be reopened. Worker-crash cleanup is tested. Controller kill, machine failure and platform-wide leak freedom are outside this guarantee.</li></ul></section>
-<section><h2>Complete evidence</h2><p><a href="report.json">JSON index</a> · Every message, worker outcome and RSS sample is retained in the lossless files below. SHA-256 checks and deterministic rendering reconcile the files with this page.</p><ul><li><a href="raw/case-0-trial-0-pipe.json.gz">raw/case-0-trial-0-pipe.json.gz</a> SHA-256 12b2f33e5e94fa6d273a608c7b33574e87921c80beddad79d6a1b67b42d07a66</li><li><a href="raw/case-0-trial-0-shared.json.gz">raw/case-0-trial-0-shared.json.gz</a> SHA-256 f97f221cb4130cb7fd897302badacaa656c86692c4c5417c5c1e3b9ed5eadf9d</li><li><a href="raw/case-0-trial-1-shared.json.gz">raw/case-0-trial-1-shared.json.gz</a> SHA-256 f232e907ab6c94d579a095297ef917d536f13a2f128a9819774368f06b95e4f2</li><li><a href="raw/case-0-trial-1-pipe.json.gz">raw/case-0-trial-1-pipe.json.gz</a> SHA-256 7314c78ab9c28f02938bede621576c9c91f33e9ba5cc35fceeb94e4e45d2b1fb</li><li><a href="raw/case-0-trial-2-pipe.json.gz">raw/case-0-trial-2-pipe.json.gz</a> SHA-256 2895c2b08f4dc52fdd60f25ae001dafe51d1e1ab45fca21a78951289a1f7f9d6</li><li><a href="raw/case-0-trial-2-shared.json.gz">raw/case-0-trial-2-shared.json.gz</a> SHA-256 f9403158043ac2b9bf8037a07cd5919b67bb6d059948201e0ed840c450f075c4</li><li><a href="raw/case-0-trial-3-shared.json.gz">raw/case-0-trial-3-shared.json.gz</a> SHA-256 1769b232875bdf874e0c9e8ea5b1ccea2b1da5f892142e2ed1597ef8be356b67</li><li><a href="raw/case-0-trial-3-pipe.json.gz">raw/case-0-trial-3-pipe.json.gz</a> SHA-256 387021a655795a83c6dedc00d798fe710bc1d02d938a9bb3424473b90bc06f5a</li><li><a href="raw/case-1-trial-0-pipe.json.gz">raw/case-1-trial-0-pipe.json.gz</a> SHA-256 100e42c15794fa85b1b1456bc6a39a04ddaaffc1683741ea2676cc769dd3e2f9</li><li><a href="raw/case-1-trial-0-shared.json.gz">raw/case-1-trial-0-shared.json.gz</a> SHA-256 ad4da2c98b7dd198a45034f89b68f8737193ceed57169a6b5baedba47c7fe4eb</li><li><a href="raw/case-1-trial-1-shared.json.gz">raw/case-1-trial-1-shared.json.gz</a> SHA-256 f08ca698266bff8c70dc43dc0766d82bbd4db939d23cb60a6b15ad008ed4fb85</li><li><a href="raw/case-1-trial-1-pipe.json.gz">raw/case-1-trial-1-pipe.json.gz</a> SHA-256 4c590d754748eae4d8a8047ae3cd783eb830bf88f57c2e2a7f3abd8ff172c1b3</li><li><a href="raw/case-1-trial-2-pipe.json.gz">raw/case-1-trial-2-pipe.json.gz</a> SHA-256 0ee06488ffb46d7d3fd95be6444dfe575053154e37dc55e27d90551b7ff7693a</li><li><a href="raw/case-1-trial-2-shared.json.gz">raw/case-1-trial-2-shared.json.gz</a> SHA-256 5859c059801cd6acb04aead2ec798058b494aead9617c9adf89b560de626de7a</li><li><a href="raw/case-1-trial-3-shared.json.gz">raw/case-1-trial-3-shared.json.gz</a> SHA-256 deac196b72d5254b2888ccd2d3f9076782392bb32e259d344095bc6442607614</li><li><a href="raw/case-1-trial-3-pipe.json.gz">raw/case-1-trial-3-pipe.json.gz</a> SHA-256 f3cb6611d16e11dd4eab3473ecd9c85132c9e035e6664ffabe10751b960a112a</li><li><a href="raw/case-2-trial-0-pipe.json.gz">raw/case-2-trial-0-pipe.json.gz</a> SHA-256 1cd3caa8d5d1aa8a0da9d33c54a62c2628f06c8fd47ed749c7da5dc9a696ef3a</li><li><a href="raw/case-2-trial-0-shared.json.gz">raw/case-2-trial-0-shared.json.gz</a> SHA-256 b53656a0517b93ddf06eda954fe88ac1252c94a1d162562db318f94b24f027f0</li><li><a href="raw/case-2-trial-1-shared.json.gz">raw/case-2-trial-1-shared.json.gz</a> SHA-256 1e2af3e790f020631c7d9783e7ddd81dd6b4404edf23477af61d057af7aba4a2</li><li><a href="raw/case-2-trial-1-pipe.json.gz">raw/case-2-trial-1-pipe.json.gz</a> SHA-256 10105b43a973d84e4dfcf319bb5aac712cf9f3595ce9a8a20c15642eda11fac8</li><li><a href="raw/case-2-trial-2-pipe.json.gz">raw/case-2-trial-2-pipe.json.gz</a> SHA-256 6bf3b7391c7e08bc1d4ad0db7a3c3d663edf9804dc10e622a45f457c5628a8d9</li><li><a href="raw/case-2-trial-2-shared.json.gz">raw/case-2-trial-2-shared.json.gz</a> SHA-256 f3d8bf241fea3f81458c4193d910a75979967040d9c74c4c77b238d6fdad6090</li><li><a href="raw/case-2-trial-3-shared.json.gz">raw/case-2-trial-3-shared.json.gz</a> SHA-256 527297b01b702ad67a5f68416a17704e0e3362eac962a47b191b7703e442b211</li><li><a href="raw/case-2-trial-3-pipe.json.gz">raw/case-2-trial-3-pipe.json.gz</a> SHA-256 21bae322e6c29188db9175552c41b8c1cbe7a1b88fd2c296033707c19369c303</li><li><a href="raw/case-3-trial-0-pipe.json.gz">raw/case-3-trial-0-pipe.json.gz</a> SHA-256 8e4a267c6bf5baea9442cf114a62449dc7bae90eff040518c02c21a531513960</li><li><a href="raw/case-3-trial-0-shared.json.gz">raw/case-3-trial-0-shared.json.gz</a> SHA-256 b643d713d9ecbdaf7705928898dcb15f2b2855c45687e05fe6e0e7bda8656b53</li><li><a href="raw/case-3-trial-1-shared.json.gz">raw/case-3-trial-1-shared.json.gz</a> SHA-256 6ef31f8f5a07c8eec98fec85d1fc482a667fc5d6d73600ba8857144fb5c1acac</li><li><a href="raw/case-3-trial-1-pipe.json.gz">raw/case-3-trial-1-pipe.json.gz</a> SHA-256 722078e4f39f2faa6511739ebbe9b279054ade8e0b6f0f6cddf6763b05e12fa1</li><li><a href="raw/case-3-trial-2-pipe.json.gz">raw/case-3-trial-2-pipe.json.gz</a> SHA-256 e2c8b92af1c4047896c435840094a326c8e4dfd1536021e09a3517c5773dc032</li><li><a href="raw/case-3-trial-2-shared.json.gz">raw/case-3-trial-2-shared.json.gz</a> SHA-256 fc8ac8dfbcf46298ec9bef7c6edaac2484fcf0f96cb2edac810e9ce588b649ba</li><li><a href="raw/case-3-trial-3-shared.json.gz">raw/case-3-trial-3-shared.json.gz</a> SHA-256 a8b33fb86770f29c6adff07032cb9d50e67ff9a12dabc002106e179f30f57374</li><li><a href="raw/case-3-trial-3-pipe.json.gz">raw/case-3-trial-3-pipe.json.gz</a> SHA-256 ceeaa76d2f0d59437c240c56575964fab5daded1350372c8a2703b81ad0aac8c</li><li><a href="raw/case-4-trial-0-pipe.json.gz">raw/case-4-trial-0-pipe.json.gz</a> SHA-256 9c95b3d1cb6698ed87517b03614ceedffe39043d2ebd90c2030ba7d5bdb017ca</li><li><a href="raw/case-4-trial-0-shared.json.gz">raw/case-4-trial-0-shared.json.gz</a> SHA-256 b4eb2d7a15c368a94b175de9026f15159e48091659f241b663945c10c4990951</li><li><a href="raw/case-4-trial-1-shared.json.gz">raw/case-4-trial-1-shared.json.gz</a> SHA-256 b5c54c3e755b4ce9c6e6c2f72a55c596f17439e5e13bf0c448ed9350d2717635</li><li><a href="raw/case-4-trial-1-pipe.json.gz">raw/case-4-trial-1-pipe.json.gz</a> SHA-256 4c9d9a75b79e669722ded917fcffa77921d17e525a60a9f12ee7eeb72188eaed</li><li><a href="raw/case-4-trial-2-pipe.json.gz">raw/case-4-trial-2-pipe.json.gz</a> SHA-256 c128643f8ee0209aa3a23715c55c892efe80f0cd449922691b8edf390db6129b</li><li><a href="raw/case-4-trial-2-shared.json.gz">raw/case-4-trial-2-shared.json.gz</a> SHA-256 a5c80bc08fd8f2c24f9a3aa607cfcf58018388f9335060bcf766dd7c39204ae1</li><li><a href="raw/case-4-trial-3-shared.json.gz">raw/case-4-trial-3-shared.json.gz</a> SHA-256 3d21ff16f94f1bb03b94f9c149869ed7f14bc1f912a37c2ae4e5bb707a338616</li><li><a href="raw/case-4-trial-3-pipe.json.gz">raw/case-4-trial-3-pipe.json.gz</a> SHA-256 eef3d6e6af159d52af90249f94216217ff19efabfd0c7a0b76460ca0a12fd3cd</li><li><a href="raw/case-5-trial-0-pipe.json.gz">raw/case-5-trial-0-pipe.json.gz</a> SHA-256 d059a97ac68de336496dfa87c7987372a8d434a67191f32692f40ac2cdf2cc7b</li><li><a href="raw/case-5-trial-0-shared.json.gz">raw/case-5-trial-0-shared.json.gz</a> SHA-256 5518fb71f9f52736b317dc39870ab133a8154cb3a08ed2743a74d4934da4cd09</li><li><a href="raw/case-5-trial-1-shared.json.gz">raw/case-5-trial-1-shared.json.gz</a> SHA-256 71e3cc5f19e552c1fcc31ea181313c1a3bd54c1100fb58277c2670f14b60bacf</li><li><a href="raw/case-5-trial-1-pipe.json.gz">raw/case-5-trial-1-pipe.json.gz</a> SHA-256 7936000445c74fef5d99d8883257f1952eca2c1313beb8c92bbf42c1cec684d0</li><li><a href="raw/case-5-trial-2-pipe.json.gz">raw/case-5-trial-2-pipe.json.gz</a> SHA-256 81f1aad875d51113fe3bc9fdd09517713e5e651684c13c8aa5303100ec6dbd26</li><li><a href="raw/case-5-trial-2-shared.json.gz">raw/case-5-trial-2-shared.json.gz</a> SHA-256 21570b0d4c5c2eaf42a17afb42804cce7d1d51d9aacde0eabad1d4fb2d786065</li><li><a href="raw/case-5-trial-3-shared.json.gz">raw/case-5-trial-3-shared.json.gz</a> SHA-256 3d93d7f582adcf9dae25f98185451e5b98e87c1b01d8f123e42f9dae408efa49</li><li><a href="raw/case-5-trial-3-pipe.json.gz">raw/case-5-trial-3-pipe.json.gz</a> SHA-256 fce9377f21f85d53af44c8ad48dc5bf6c8d7453dfbbd15746232c48fc7e7b71a</li></ul><details><summary>All paired observations, summaries and provenance</summary><pre>{
+<h1>Tiny IPC Lab</h1><p>2026-10-15T10:36:54.972771+00:00 · 4 alternating fresh-process pairs per size · float32 tensors · Pipe receive API: into</p>
+<section><h2>Verified end-to-end round trips</h2><p>Median per-trial payload throughput, RTT percentiles and warm baseline RSS; maximum paired sampled RSS and sampling gap. Every message is fully checked. One acknowledged payload is in flight in both modes. Shared mode includes a producer-to-shared-buffer copy; Pipe uses the declared public receive API and a preallocated target. These are descriptive observations, not pure-transport or universal speedup claims.</p><div class="scroll"><table><tr><th>Payload bytes</th><th>Mode</th><th>Messages/trial</th><th>Payload MiB/s</th><th>RTT p50 ms</th><th>RTT p95 ms</th><th>Warm baseline RSS MiB</th><th>Peak paired RSS MiB</th><th>Max RSS gap ms</th></tr><tr><td>64</td><td>pipe</td><td>8192</td><td>1.92</td><td>0.0247</td><td>0.0514</td><td>77.41</td><td>84.22</td><td>11.869</td></tr><tr><td>64</td><td>shared</td><td>8192</td><td>2.25</td><td>0.0204</td><td>0.0439</td><td>77.52</td><td>84.67</td><td>6.446</td></tr><tr><td>1024</td><td>pipe</td><td>8192</td><td>32.52</td><td>0.0251</td><td>0.0488</td><td>77.37</td><td>84.42</td><td>6.629</td></tr><tr><td>1024</td><td>shared</td><td>8192</td><td>34.83</td><td>0.0228</td><td>0.0463</td><td>77.72</td><td>84.95</td><td>6.954</td></tr><tr><td>16384</td><td>pipe</td><td>8192</td><td>339.37</td><td>0.0401</td><td>0.0723</td><td>77.60</td><td>84.53</td><td>6.943</td></tr><tr><td>16384</td><td>shared</td><td>8192</td><td>453.67</td><td>0.0220</td><td>0.0451</td><td>77.65</td><td>84.62</td><td>6.454</td></tr><tr><td>262144</td><td>pipe</td><td>1024</td><td>800.08</td><td>0.2751</td><td>0.4360</td><td>78.84</td><td>80.28</td><td>6.486</td></tr><tr><td>262144</td><td>shared</td><td>1024</td><td>2310.67</td><td>0.0990</td><td>0.1655</td><td>78.73</td><td>80.16</td><td>18.978</td></tr><tr><td>1048576</td><td>pipe</td><td>256</td><td>869.48</td><td>1.0842</td><td>1.5280</td><td>84.64</td><td>85.84</td><td>6.361</td></tr><tr><td>1048576</td><td>shared</td><td>256</td><td>3848.68</td><td>0.2384</td><td>0.3672</td><td>83.61</td><td>83.97</td><td>6.455</td></tr><tr><td>4194304</td><td>pipe</td><td>64</td><td>845.37</td><td>4.1364</td><td>6.1741</td><td>133.53</td><td>358.52</td><td>6.406</td></tr><tr><td>4194304</td><td>shared</td><td>64</td><td>3673.33</td><td>1.0975</td><td>1.2968</td><td>103.11</td><td>104.06</td><td>6.448</td></tr></table></div></section>
+<section><h2>All-pair descriptive throughput ratios</h2><p>Shared / Pipe, median [min, max] across every prespecified pair. Not ratios of table medians, confidence intervals or universal effects.</p><table><tr><th>Payload bytes</th><th>Median</th><th>Min</th><th>Max</th></tr><tr><td>64</td><td>1.394</td><td>0.857</td><td>1.799</td></tr><tr><td>1024</td><td>1.046</td><td>0.888</td><td>1.267</td></tr><tr><td>16384</td><td>1.330</td><td>1.234</td><td>1.932</td></tr><tr><td>262144</td><td>2.924</td><td>1.841</td><td>3.518</td></tr><tr><td>1048576</td><td>4.411</td><td>3.833</td><td>4.551</td></tr><tr><td>4194304</td><td>4.337</td><td>3.114</td><td>5.193</td></tr></table></section>
+<section><h2>Scope and limitations</h2><ul><li>Single producer, single consumer, spawn processes, one acknowledged payload in flight, one fixed shared slot; no pipelining or lock-free claim.</li><li>Pipe uses send_bytes with a declared public receive API: recv_bytes_into, or recv_bytes plus a copy into the same preallocated target. No arrays are pickled. Shared mode copies into one shared slot. Both use the same header, validation and acknowledgement.</li><li>Every received tensor is checked by exact value equality against independently generated expected values before acknowledgement. CRC32 is additional accounting, not the sole correctness check.</li><li>Measured round trip includes float32 payload generation, producer CRC, shared copy or Pipe transfer, receiver expected-value generation/full validation/CRC and acknowledgement. Overall throughput also includes per-message record keeping. This is not pure transport, a model inference benchmark or a zero-copy end-to-end claim.</li><li>Eight identical warmups precede measurement. Fresh processes and alternating mode order are used per pair; startup is excluded. Fixed size order, shared-host interference, allocator state, caches and thermals remain uncontrolled. Finite single-host observations are descriptive, not confidence intervals or universal speedups.</li><li>The controller samples producer/consumer RSS sequentially at a requested 5 ms cadence, with actual gaps and read duration retained. Paired RSS can double-count shared pages and miss spikes. Warm baseline, input/reference arrays, record buffers and result serialization are included; controller/resource-tracker memory is excluded. It is not unique physical RAM or total deployment memory.</li><li>Workers stay alive after measurement until the controller takes the final sample. The controller closes/unlinks its owned segment after workers exit and probes that its name cannot be reopened. Worker-crash cleanup is tested. Controller kill, machine failure and platform-wide leak freedom are outside this guarantee.</li></ul></section>
+<section><h2>Complete evidence</h2><p><a href="report.json">JSON index</a> · Every message, worker outcome and RSS sample is retained in the lossless files below. SHA-256 checks and deterministic rendering reconcile the files with this page.</p><ul><li><a href="raw/case-0-trial-0-pipe.json.gz">raw/case-0-trial-0-pipe.json.gz</a> SHA-256 d263e572cabaec65aea0b17106540d1f2d710bf7632763289c4376f7cfc6103a</li><li><a href="raw/case-0-trial-0-shared.json.gz">raw/case-0-trial-0-shared.json.gz</a> SHA-256 6d2705a3ed36610b426424b2f0c76572bf3591f042f1802af0d474e8ce9c63d0</li><li><a href="raw/case-0-trial-1-shared.json.gz">raw/case-0-trial-1-shared.json.gz</a> SHA-256 ec723e99b07974176dea01a21c0c3f2f790547ae374c66258e8afbc75be6b06e</li><li><a href="raw/case-0-trial-1-pipe.json.gz">raw/case-0-trial-1-pipe.json.gz</a> SHA-256 3b2df6ffaa54dd4d3ee2f078f38d67b4da3ecf2fd3a727de0740741389e70dba</li><li><a href="raw/case-0-trial-2-pipe.json.gz">raw/case-0-trial-2-pipe.json.gz</a> SHA-256 309869afcab6fc6367e24582ad31783ff785c719ad1d0bee95bd499c1d377316</li><li><a href="raw/case-0-trial-2-shared.json.gz">raw/case-0-trial-2-shared.json.gz</a> SHA-256 1b1f503fa393f7d912701d4511dc08c9eec7911053cf713f059cc355f6fb2675</li><li><a href="raw/case-0-trial-3-shared.json.gz">raw/case-0-trial-3-shared.json.gz</a> SHA-256 78707637ee37cca7f6546624e35df32cbc4e80ac70149fe1f33dd28469a2cc0d</li><li><a href="raw/case-0-trial-3-pipe.json.gz">raw/case-0-trial-3-pipe.json.gz</a> SHA-256 e4b4ad3e191e8b5123c24b929f73d67243686c24ed160ed03bb46ad2f017615d</li><li><a href="raw/case-1-trial-0-pipe.json.gz">raw/case-1-trial-0-pipe.json.gz</a> SHA-256 18d17af22d9dc08a7933b10a70177335619c5b2c39fee3b8ed841c495ad1f256</li><li><a href="raw/case-1-trial-0-shared.json.gz">raw/case-1-trial-0-shared.json.gz</a> SHA-256 13726f85babf4635104d72291fed5af153edf3b3706318aa7dc9a451bb89b430</li><li><a href="raw/case-1-trial-1-shared.json.gz">raw/case-1-trial-1-shared.json.gz</a> SHA-256 ac28bc33ee08f9f0282f690de6baedfefd8b5bae1b59e9b4207ac90093ff27b5</li><li><a href="raw/case-1-trial-1-pipe.json.gz">raw/case-1-trial-1-pipe.json.gz</a> SHA-256 79ff7328de5cea0237bd042f3a97b2b32daa3f76e24f0c23f571f3660dd73f28</li><li><a href="raw/case-1-trial-2-pipe.json.gz">raw/case-1-trial-2-pipe.json.gz</a> SHA-256 c5721f2455edf7323ac7d56fed4cfa89335bee473856bd5ed806446faf28e043</li><li><a href="raw/case-1-trial-2-shared.json.gz">raw/case-1-trial-2-shared.json.gz</a> SHA-256 ff0fa32d5f6910dcf2a41a4512e94aa809893e9761445b596b82fd84d6689f45</li><li><a href="raw/case-1-trial-3-shared.json.gz">raw/case-1-trial-3-shared.json.gz</a> SHA-256 534ea67cd58418cfbff70312291b74532582e3614f628d2791afd793ebde2dfe</li><li><a href="raw/case-1-trial-3-pipe.json.gz">raw/case-1-trial-3-pipe.json.gz</a> SHA-256 b2e50609cca782cf6f86897b44d582a76292e9c2348e9c7671710e46b5fd8b91</li><li><a href="raw/case-2-trial-0-pipe.json.gz">raw/case-2-trial-0-pipe.json.gz</a> SHA-256 4e5047c633eacdf02b65efb3929d77ecd8d4a29d29091badb5c2e90a1868a110</li><li><a href="raw/case-2-trial-0-shared.json.gz">raw/case-2-trial-0-shared.json.gz</a> SHA-256 53a745322febcc19b0010d3fb98a4e5e4ef3a42843d8e9e494660beccb232675</li><li><a href="raw/case-2-trial-1-shared.json.gz">raw/case-2-trial-1-shared.json.gz</a> SHA-256 3aa6a3ed948f0ad5cb36835320b80a0883b6f3aa97b16f4f7c31a6eed61c74ea</li><li><a href="raw/case-2-trial-1-pipe.json.gz">raw/case-2-trial-1-pipe.json.gz</a> SHA-256 9e8bce79101dc5803ed7d5cba9d9f39af33e8d84e4b5ba9bd61afa000ae10d43</li><li><a href="raw/case-2-trial-2-pipe.json.gz">raw/case-2-trial-2-pipe.json.gz</a> SHA-256 6923af7d3833afb549f55847ffb42f19d0c997cc3e4ac5600e785c508f23c8f6</li><li><a href="raw/case-2-trial-2-shared.json.gz">raw/case-2-trial-2-shared.json.gz</a> SHA-256 7fc8fc501a605433c84b2123c359e29a0f05cfa512a11a32061c168466ca4f2c</li><li><a href="raw/case-2-trial-3-shared.json.gz">raw/case-2-trial-3-shared.json.gz</a> SHA-256 d7760db7937a9fc46517d039a3600a4d36e13717b386d86147aa9fd2ed0cf875</li><li><a href="raw/case-2-trial-3-pipe.json.gz">raw/case-2-trial-3-pipe.json.gz</a> SHA-256 e767595f646840499b00062384ac1d07c98a5727a52a371128741eee97040010</li><li><a href="raw/case-3-trial-0-pipe.json.gz">raw/case-3-trial-0-pipe.json.gz</a> SHA-256 4e29e05af415465a653acfca27032b3dfe1e84be81e5089c2ad1fb32f9179c46</li><li><a href="raw/case-3-trial-0-shared.json.gz">raw/case-3-trial-0-shared.json.gz</a> SHA-256 7411617dcc910295d821be49bc4b1fd2767124cfedc9154940a02a5e94fe0542</li><li><a href="raw/case-3-trial-1-shared.json.gz">raw/case-3-trial-1-shared.json.gz</a> SHA-256 10d4f67674f53ad429734d1111d8ba418d53d871c56b8b8f41a53c8b820e0e05</li><li><a href="raw/case-3-trial-1-pipe.json.gz">raw/case-3-trial-1-pipe.json.gz</a> SHA-256 935751a03668d036eebca6fded1e92ff82fcb5d6078792dad8c06eb604f82b86</li><li><a href="raw/case-3-trial-2-pipe.json.gz">raw/case-3-trial-2-pipe.json.gz</a> SHA-256 b8af16df65f7e05b991399e5fa8a109d29310c68cc2f646534b5bb56ec10c903</li><li><a href="raw/case-3-trial-2-shared.json.gz">raw/case-3-trial-2-shared.json.gz</a> SHA-256 b2b4db22423cc84c95b3e0e01aa9607cc54be2fce21a676f91303010828b31dd</li><li><a href="raw/case-3-trial-3-shared.json.gz">raw/case-3-trial-3-shared.json.gz</a> SHA-256 d8bbbc9b5b5633bc09c2e62c6f18eda2f9b6a821f1f00d07b51e02b3445e3d46</li><li><a href="raw/case-3-trial-3-pipe.json.gz">raw/case-3-trial-3-pipe.json.gz</a> SHA-256 5f0bc9e3e4d51a5c67ac457c2e1af7b2b17d72b4c9983c0530cd7f71f634dd44</li><li><a href="raw/case-4-trial-0-pipe.json.gz">raw/case-4-trial-0-pipe.json.gz</a> SHA-256 90a5083cb320a3b763b9df357c7db2cf90707c072a9d570b8d23889c6b84b230</li><li><a href="raw/case-4-trial-0-shared.json.gz">raw/case-4-trial-0-shared.json.gz</a> SHA-256 1dd44fb7da63b17506b89f498d74b0ee251f7ce1b5eaebf63d62fd3412fa495e</li><li><a href="raw/case-4-trial-1-shared.json.gz">raw/case-4-trial-1-shared.json.gz</a> SHA-256 604c1884d7942695a2a265dcc29e3f7ee9152da1e91a40148bb2d0a96b0370f2</li><li><a href="raw/case-4-trial-1-pipe.json.gz">raw/case-4-trial-1-pipe.json.gz</a> SHA-256 b0b08191c4bc389848dd7185e6918ad6d1fdde442ea3f2be6354f19cf9c2e929</li><li><a href="raw/case-4-trial-2-pipe.json.gz">raw/case-4-trial-2-pipe.json.gz</a> SHA-256 4db0376e1ec5d03c858bb49dffc98f07f5d16226b6a0cbec25ff30036dca9eec</li><li><a href="raw/case-4-trial-2-shared.json.gz">raw/case-4-trial-2-shared.json.gz</a> SHA-256 e9ed0f2e7362382b97fdabc0c42e2d026de38b3364bf170293c97e8563520a73</li><li><a href="raw/case-4-trial-3-shared.json.gz">raw/case-4-trial-3-shared.json.gz</a> SHA-256 0103a4e42f26197ffff4bf0f9e92c0c07602ae97e1d0b7eafa471cdc66a617bd</li><li><a href="raw/case-4-trial-3-pipe.json.gz">raw/case-4-trial-3-pipe.json.gz</a> SHA-256 15666334dfca9eaa116fc91cf78c2da82360314589d5a52b18e564d0289ed99a</li><li><a href="raw/case-5-trial-0-pipe.json.gz">raw/case-5-trial-0-pipe.json.gz</a> SHA-256 12fe0f44605f257c46d112e11ee12d395f127dad5559c3dbc1673d87271e6c90</li><li><a href="raw/case-5-trial-0-shared.json.gz">raw/case-5-trial-0-shared.json.gz</a> SHA-256 5495d6a2fe8aab107e48bd959800e5e7c829fd98ca01aeaeb89de112c6f79f41</li><li><a href="raw/case-5-trial-1-shared.json.gz">raw/case-5-trial-1-shared.json.gz</a> SHA-256 de7c3ad5538fffd18a4d2511d922cf1a82a260145cf7ad6168c8c837a612d474</li><li><a href="raw/case-5-trial-1-pipe.json.gz">raw/case-5-trial-1-pipe.json.gz</a> SHA-256 a3b8e9d3aafc205b7498f2fd52d5a0ffdab5712782ef2914fc865a64136752d6</li><li><a href="raw/case-5-trial-2-pipe.json.gz">raw/case-5-trial-2-pipe.json.gz</a> SHA-256 a6816e031967de483681effa15c3a07854731f634ca24747c897bbec2dd2874c</li><li><a href="raw/case-5-trial-2-shared.json.gz">raw/case-5-trial-2-shared.json.gz</a> SHA-256 05e3a2857861927b61626da620abcbf0b1d98c47ed76ae99f4368d67d544b75e</li><li><a href="raw/case-5-trial-3-shared.json.gz">raw/case-5-trial-3-shared.json.gz</a> SHA-256 50c15728760f7777c0a5fcca12f9a73205aeb930818f399246d13143c683bd36</li><li><a href="raw/case-5-trial-3-pipe.json.gz">raw/case-5-trial-3-pipe.json.gz</a> SHA-256 63a16575a132541d38e0f99e0cc819b2b7b1c78b2c226b2b288d4f5bb155e68f</li></ul><details><summary>All paired observations, summaries and provenance</summary><pre>{
   &quot;host&quot;: {
     &quot;os&quot;: &quot;Darwin&quot;,
     &quot;os_release&quot;: &quot;27.0.0&quot;,
@@ -12,127 +13,214 @@
     &quot;logical_cpus&quot;: 15,
     &quot;python&quot;: &quot;3.12.14&quot;
   },
-  &quot;source_sha256&quot;: &quot;4e416bc03ffc70675df52b411a4929a36303002ed5aff1b72aa882db302e8753&quot;,
+  &quot;source_sha256&quot;: &quot;c9ce5eb5bf600d003eb9b734525d3211e268faf66160d767c543b1783396ce56&quot;,
+  &quot;pipe_receive&quot;: &quot;into&quot;,
+  &quot;comparisons&quot;: [
+    {
+      &quot;payload_bytes&quot;: 64,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        1.7985061795759594,
+        0.8572950303432242,
+        1.7101111695277518,
+        1.0785081687826423
+      ],
+      &quot;median&quot;: 1.394309669155197,
+      &quot;min&quot;: 0.8572950303432242,
+      &quot;max&quot;: 1.7985061795759594,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    },
+    {
+      &quot;payload_bytes&quot;: 1024,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        1.0205231068719114,
+        0.8882360035135393,
+        1.2674454737130303,
+        1.0718561502224526
+      ],
+      &quot;median&quot;: 1.046189628547182,
+      &quot;min&quot;: 0.8882360035135393,
+      &quot;max&quot;: 1.2674454737130303,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    },
+    {
+      &quot;payload_bytes&quot;: 16384,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        1.310159090373437,
+        1.3502735727313158,
+        1.932341086272574,
+        1.23387010657834
+      ],
+      &quot;median&quot;: 1.3302163315523763,
+      &quot;min&quot;: 1.23387010657834,
+      &quot;max&quot;: 1.932341086272574,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    },
+    {
+      &quot;payload_bytes&quot;: 262144,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        1.8405139271725257,
+        2.6910772215289365,
+        3.517937722217244,
+        3.156296826925603
+      ],
+      &quot;median&quot;: 2.9236870242272697,
+      &quot;min&quot;: 1.8405139271725257,
+      &quot;max&quot;: 3.517937722217244,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    },
+    {
+      &quot;payload_bytes&quot;: 1048576,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        4.298720392075122,
+        4.551473585000524,
+        4.523945212112849,
+        3.8326043875856035
+      ],
+      &quot;median&quot;: 4.411332802093986,
+      &quot;min&quot;: 3.8326043875856035,
+      &quot;max&quot;: 4.551473585000524,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    },
+    {
+      &quot;payload_bytes&quot;: 4194304,
+      &quot;basis&quot;: &quot;all_prespecified_pairs&quot;,
+      &quot;ratios&quot;: [
+        3.1139558642778695,
+        4.27231393035366,
+        4.401340181689671,
+        5.192570576277458
+      ],
+      &quot;median&quot;: 4.336827056021665,
+      &quot;min&quot;: 3.1139558642778695,
+      &quot;max&quot;: 5.192570576277458,
+      &quot;assessment&quot;: &quot;descriptive_single_host_verified_round_trips&quot;
+    }
+  ],
   &quot;all_pair_descriptive_ratios&quot;: [
     {
       &quot;payload_bytes&quot;: 64,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.3120392285083282
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.7985061795759594
     },
     {
       &quot;payload_bytes&quot;: 64,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 0.9880705307549849
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 0.8572950303432242
     },
     {
       &quot;payload_bytes&quot;: 64,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.0656332541274693
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.7101111695277518
     },
     {
       &quot;payload_bytes&quot;: 64,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 0.7254228563986479
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.0785081687826423
     },
     {
       &quot;payload_bytes&quot;: 1024,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.1948659002549822
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.0205231068719114
     },
     {
       &quot;payload_bytes&quot;: 1024,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.0642962719143456
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 0.8882360035135393
     },
     {
       &quot;payload_bytes&quot;: 1024,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.1560050989326385
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.2674454737130303
     },
     {
       &quot;payload_bytes&quot;: 1024,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.4000038460348014
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.0718561502224526
     },
     {
       &quot;payload_bytes&quot;: 16384,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.7110799629148703
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.310159090373437
     },
     {
       &quot;payload_bytes&quot;: 16384,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.7663833645201517
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.3502735727313158
     },
     {
       &quot;payload_bytes&quot;: 16384,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.6577024857035045
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.932341086272574
     },
     {
       &quot;payload_bytes&quot;: 16384,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.989145139903751
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.23387010657834
     },
     {
       &quot;payload_bytes&quot;: 262144,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.6823359301561522
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 1.8405139271725257
     },
     {
       &quot;payload_bytes&quot;: 262144,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.6442060914244667
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 2.6910772215289365
     },
     {
       &quot;payload_bytes&quot;: 262144,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 2.8853745636586803
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.517937722217244
     },
     {
       &quot;payload_bytes&quot;: 262144,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 2.389297959985452
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.156296826925603
     },
     {
       &quot;payload_bytes&quot;: 1048576,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.575007119293442
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.298720392075122
     },
     {
       &quot;payload_bytes&quot;: 1048576,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.734958198463514
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.551473585000524
     },
     {
       &quot;payload_bytes&quot;: 1048576,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.467805600215149
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.523945212112849
     },
     {
       &quot;payload_bytes&quot;: 1048576,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.701384317302472
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.8326043875856035
     },
     {
       &quot;payload_bytes&quot;: 4194304,
       &quot;trial&quot;: 0,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.907095727671897
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 3.1139558642778695
     },
     {
       &quot;payload_bytes&quot;: 4194304,
       &quot;trial&quot;: 1,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 5.118613914231397
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.27231393035366
     },
     {
       &quot;payload_bytes&quot;: 4194304,
       &quot;trial&quot;: 2,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 2.0228015217299102
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 4.401340181689671
     },
     {
       &quot;payload_bytes&quot;: 4194304,
       &quot;trial&quot;: 3,
-      &quot;descriptive_shared_over_pipe_throughput&quot;: 5.9021517991839945
+      &quot;descriptive_shared_over_pipe_throughput&quot;: 5.192570576277458
     }
   ],
   &quot;cases&quot;: [
@@ -143,235 +231,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.24355012501473539,
-            &quot;messages_per_s&quot;: 33635.786471078034,
-            &quot;payload_mib_per_s&quot;: 2.052965482853884,
+            &quot;duration_s&quot;: 0.4301168750098441,
+            &quot;messages_per_s&quot;: 19045.986046961098,
+            &quot;payload_mib_per_s&quot;: 1.1624747343115904,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.017165992176160216,
-              &quot;p50&quot;: 0.02345799293834716,
-              &quot;p95&quot;: 0.05795433971798046,
-              &quot;p99&quot;: 0.1401960570365191,
-              &quot;max&quot;: 0.6899579893797636
+              &quot;min&quot;: 0.01333298860117793,
+              &quot;p50&quot;: 0.03208398993592709,
+              &quot;p95&quot;: 0.11018546065315603,
+              &quot;p99&quot;: 0.20747994625708105,
+              &quot;max&quot;: 31.27358399797231
             },
-            &quot;producer_cpu_s&quot;: 0.872007,
-            &quot;consumer_cpu_s&quot;: 0.9578480000000003,
-            &quot;baseline_paired_rss_bytes&quot;: 81313792,
-            &quot;peak_paired_rss_bytes&quot;: 88293376,
-            &quot;rss_sample_count&quot;: 43,
-            &quot;max_rss_gap_ms&quot;: 8.665000001201406,
-            &quot;max_paired_read_ms&quot;: 0.07000000914558768
+            &quot;producer_cpu_s&quot;: 0.9673230000000002,
+            &quot;consumer_cpu_s&quot;: 0.9678039999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 81281024,
+            &quot;peak_paired_rss_bytes&quot;: 88178688,
+            &quot;rss_sample_count&quot;: 72,
+            &quot;max_rss_gap_ms&quot;: 11.868582980241627,
+            &quot;max_paired_read_ms&quot;: 0.4034999874420464
           },
           &quot;file&quot;: &quot;raw/case-0-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;12b2f33e5e94fa6d273a608c7b33574e87921c80beddad79d6a1b67b42d07a66&quot;
+          &quot;sha256&quot;: &quot;d263e572cabaec65aea0b17106540d1f2d710bf7632763289c4376f7cfc6103a&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.18562716702581383,
-            &quot;messages_per_s&quot;: 44131.47133178409,
-            &quot;payload_mib_per_s&quot;: 2.6935712482778373,
+            &quot;duration_s&quot;: 0.23915229199337773,
+            &quot;messages_per_s&quot;: 34254.32360157703,
+            &quot;payload_mib_per_s&quot;: 2.090717993260317,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.013582990504801273,
-              &quot;p50&quot;: 0.01741599407978356,
-              &quot;p95&quot;: 0.04463924415176732,
-              &quot;p99&quot;: 0.07132105645723646,
-              &quot;max&quot;: 0.5412499886006117
+              &quot;min&quot;: 0.013250013580545783,
+              &quot;p50&quot;: 0.020334002329036593,
+              &quot;p95&quot;: 0.04049998824484646,
+              &quot;p99&quot;: 0.06360171333653855,
+              &quot;max&quot;: 33.3396669884678
             },
-            &quot;producer_cpu_s&quot;: 0.44970900000000014,
-            &quot;consumer_cpu_s&quot;: 0.4638769999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 81510400,
-            &quot;peak_paired_rss_bytes&quot;: 88244224,
-            &quot;rss_sample_count&quot;: 34,
-            &quot;max_rss_gap_ms&quot;: 9.439916000701487,
-            &quot;max_paired_read_ms&quot;: 0.052791001508012414
+            &quot;producer_cpu_s&quot;: 0.9996780000000001,
+            &quot;consumer_cpu_s&quot;: 1.15869,
+            &quot;baseline_paired_rss_bytes&quot;: 81494016,
+            &quot;peak_paired_rss_bytes&quot;: 88670208,
+            &quot;rss_sample_count&quot;: 43,
+            &quot;max_rss_gap_ms&quot;: 6.33845801348798,
+            &quot;max_paired_read_ms&quot;: 0.056666001910343766
           },
           &quot;file&quot;: &quot;raw/case-0-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f97f221cb4130cb7fd897302badacaa656c86692c4c5417c5c1e3b9ed5eadf9d&quot;
+          &quot;sha256&quot;: &quot;6d2705a3ed36610b426424b2f0c76572bf3591f042f1802af0d474e8ce9c63d0&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.22248475000378676,
-            &quot;messages_per_s&quot;: 36820.50117979129,
-            &quot;payload_mib_per_s&quot;: 2.2473450427118706,
+            &quot;duration_s&quot;: 0.2656401249987539,
+            &quot;messages_per_s&quot;: 30838.714595690046,
+            &quot;payload_mib_per_s&quot;: 1.8822457638970975,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.015875004464760423,
-              &quot;p50&quot;: 0.021792002371512353,
-              &quot;p95&quot;: 0.0475830165669322,
-              &quot;p99&quot;: 0.08434146526269616,
-              &quot;max&quot;: 5.767208989709616
+              &quot;min&quot;: 0.013500015484169126,
+              &quot;p50&quot;: 0.018499995348975062,
+              &quot;p95&quot;: 0.05139345303177833,
+              &quot;p99&quot;: 0.09214369434630501,
+              &quot;max&quot;: 25.004583003465086
             },
-            &quot;producer_cpu_s&quot;: 0.8496009999999998,
-            &quot;consumer_cpu_s&quot;: 0.8346470000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 81264640,
-            &quot;peak_paired_rss_bytes&quot;: 88178688,
-            &quot;rss_sample_count&quot;: 39,
-            &quot;max_rss_gap_ms&quot;: 8.685250009875745,
-            &quot;max_paired_read_ms&quot;: 0.052499992307275534
+            &quot;producer_cpu_s&quot;: 0.9731100000000001,
+            &quot;consumer_cpu_s&quot;: 0.883602,
+            &quot;baseline_paired_rss_bytes&quot;: 81248256,
+            &quot;peak_paired_rss_bytes&quot;: 88227840,
+            &quot;rss_sample_count&quot;: 47,
+            &quot;max_rss_gap_ms&quot;: 6.432583002606407,
+            &quot;max_paired_read_ms&quot;: 0.03658398054540157
           },
           &quot;file&quot;: &quot;raw/case-0-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f232e907ab6c94d579a095297ef917d536f13a2f128a9819774368f06b95e4f2&quot;
+          &quot;sha256&quot;: &quot;ec723e99b07974176dea01a21c0c3f2f790547ae374c66258e8afbc75be6b06e&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.2198306250211317,
-            &quot;messages_per_s&quot;: 37265.05348930581,
-            &quot;payload_mib_per_s&quot;: 2.2744783623843876,
+            &quot;duration_s&quot;: 0.2277319590211846,
+            &quot;messages_per_s&quot;: 35972.11403796841,
+            &quot;payload_mib_per_s&quot;: 2.19556360095022,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.016874982975423336,
-              &quot;p50&quot;: 0.021249987185001373,
-              &quot;p95&quot;: 0.0504774521687068,
-              &quot;p99&quot;: 0.07526502071414146,
-              &quot;max&quot;: 0.6538750021718442
+              &quot;min&quot;: 0.017790996935218573,
+              &quot;p50&quot;: 0.024290988221764565,
+              &quot;p95&quot;: 0.046375003876164556,
+              &quot;p99&quot;: 0.060840468795504435,
+              &quot;max&quot;: 5.14458300312981
             },
-            &quot;producer_cpu_s&quot;: 0.48422300000000007,
-            &quot;consumer_cpu_s&quot;: 0.5569590000000002,
-            &quot;baseline_paired_rss_bytes&quot;: 81346560,
-            &quot;peak_paired_rss_bytes&quot;: 88211456,
-            &quot;rss_sample_count&quot;: 39,
-            &quot;max_rss_gap_ms&quot;: 8.122041006572545,
-            &quot;max_paired_read_ms&quot;: 0.06525000208057463
+            &quot;producer_cpu_s&quot;: 0.655993,
+            &quot;consumer_cpu_s&quot;: 0.6873720000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 81231872,
+            &quot;peak_paired_rss_bytes&quot;: 88244224,
+            &quot;rss_sample_count&quot;: 40,
+            &quot;max_rss_gap_ms&quot;: 6.402792001608759,
+            &quot;max_paired_read_ms&quot;: 0.04462499055080116
           },
           &quot;file&quot;: &quot;raw/case-0-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;7314c78ab9c28f02938bede621576c9c91f33e9ba5cc35fceeb94e4e45d2b1fb&quot;
+          &quot;sha256&quot;: &quot;3b2df6ffaa54dd4d3ee2f078f38d67b4da3ecf2fd3a727de0740741389e70dba&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.2181093750114087,
-            &quot;messages_per_s&quot;: 37559.137472066475,
-            &quot;payload_mib_per_s&quot;: 2.2924278242228073,
+            &quot;duration_s&quot;: 0.3032447500154376,
+            &quot;messages_per_s&quot;: 27014.482524703104,
+            &quot;payload_mib_per_s&quot;: 1.6488331619081484,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.015458004781976342,
-              &quot;p50&quot;: 0.021583997295238078,
-              &quot;p95&quot;: 0.048059893015306436,
-              &quot;p99&quot;: 0.07346178696025163,
-              &quot;max&quot;: 0.43766701128333807
+              &quot;min&quot;: 0.015500001609325409,
+              &quot;p50&quot;: 0.025042012566700578,
+              &quot;p95&quot;: 0.05649999366141856,
+              &quot;p99&quot;: 0.1059462715056726,
+              &quot;max&quot;: 41.72391598694958
             },
-            &quot;producer_cpu_s&quot;: 0.6004150000000001,
-            &quot;consumer_cpu_s&quot;: 0.6572360000000002,
-            &quot;baseline_paired_rss_bytes&quot;: 81297408,
-            &quot;peak_paired_rss_bytes&quot;: 88276992,
-            &quot;rss_sample_count&quot;: 38,
-            &quot;max_rss_gap_ms&quot;: 7.737667008768767,
-            &quot;max_paired_read_ms&quot;: 0.04562499816529453
+            &quot;producer_cpu_s&quot;: 1.1463230000000002,
+            &quot;consumer_cpu_s&quot;: 1.1539770000000003,
+            &quot;baseline_paired_rss_bytes&quot;: 81117184,
+            &quot;peak_paired_rss_bytes&quot;: 88309760,
+            &quot;rss_sample_count&quot;: 53,
+            &quot;max_rss_gap_ms&quot;: 7.122250011889264,
+            &quot;max_paired_read_ms&quot;: 0.0595840101595968
           },
           &quot;file&quot;: &quot;raw/case-0-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;2895c2b08f4dc52fdd60f25ae001dafe51d1e1ab45fca21a78951289a1f7f9d6&quot;
+          &quot;sha256&quot;: &quot;309869afcab6fc6367e24582ad31783ff785c719ad1d0bee95bd499c1d377316&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.20467583398567513,
-            &quot;messages_per_s&quot;: 40024.265886579175,
-            &quot;payload_mib_per_s&quot;: 2.4428873221789047,
+            &quot;duration_s&quot;: 0.17732458299724385,
+            &quot;messages_per_s&quot;: 46197.76830450704,
+            &quot;payload_mib_per_s&quot;: 2.8196880068668846,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.014041026588529348,
-              &quot;p50&quot;: 0.019583007087931037,
-              &quot;p95&quot;: 0.04403735365485771,
-              &quot;p99&quot;: 0.07887868006946519,
-              &quot;max&quot;: 10.127207991899922
+              &quot;min&quot;: 0.01479100319556892,
+              &quot;p50&quot;: 0.02037500962615013,
+              &quot;p95&quot;: 0.03585244412533938,
+              &quot;p99&quot;: 0.05454857426229866,
+              &quot;max&quot;: 0.5606660270132124
             },
-            &quot;producer_cpu_s&quot;: 0.9106320000000001,
-            &quot;consumer_cpu_s&quot;: 0.9826490000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 81248256,
-            &quot;peak_paired_rss_bytes&quot;: 88555520,
-            &quot;rss_sample_count&quot;: 36,
-            &quot;max_rss_gap_ms&quot;: 8.828541002003476,
-            &quot;max_paired_read_ms&quot;: 0.0509590026922524
+            &quot;producer_cpu_s&quot;: 0.435389,
+            &quot;consumer_cpu_s&quot;: 0.45590200000000003,
+            &quot;baseline_paired_rss_bytes&quot;: 81313792,
+            &quot;peak_paired_rss_bytes&quot;: 88784896,
+            &quot;rss_sample_count&quot;: 33,
+            &quot;max_rss_gap_ms&quot;: 6.322166009340435,
+            &quot;max_paired_read_ms&quot;: 0.04300000728107989
           },
           &quot;file&quot;: &quot;raw/case-0-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f9403158043ac2b9bf8037a07cd5919b67bb6d059948201e0ed840c450f075c4&quot;
+          &quot;sha256&quot;: &quot;1b1f503fa393f7d912701d4511dc08c9eec7911053cf713f059cc355f6fb2675&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.2823071250168141,
-            &quot;messages_per_s&quot;: 29018.041962320603,
-            &quot;payload_mib_per_s&quot;: 1.7711207252392946,
+            &quot;duration_s&quot;: 0.20807866597897373,
+            &quot;messages_per_s&quot;: 39369.725682631004,
+            &quot;payload_mib_per_s&quot;: 2.4029373585590212,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.012792006600648165,
-              &quot;p50&quot;: 0.016166013665497303,
-              &quot;p95&quot;: 0.04357934667496009,
-              &quot;p99&quot;: 0.07174930622568361,
-              &quot;max&quot;: 95.66341701429337
+              &quot;min&quot;: 0.013666984159499407,
+              &quot;p50&quot;: 0.021000014385208488,
+              &quot;p95&quot;: 0.04726846382254734,
+              &quot;p99&quot;: 0.06970807298785076,
+              &quot;max&quot;: 0.834666978335008
             },
-            &quot;producer_cpu_s&quot;: 1.211775,
-            &quot;consumer_cpu_s&quot;: 1.152142,
-            &quot;baseline_paired_rss_bytes&quot;: 81412096,
-            &quot;peak_paired_rss_bytes&quot;: 88358912,
-            &quot;rss_sample_count&quot;: 48,
-            &quot;max_rss_gap_ms&quot;: 8.51666700327769,
-            &quot;max_paired_read_ms&quot;: 0.057083991123363376
+            &quot;producer_cpu_s&quot;: 0.844109,
+            &quot;consumer_cpu_s&quot;: 0.8817470000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 80953344,
+            &quot;peak_paired_rss_bytes&quot;: 88211456,
+            &quot;rss_sample_count&quot;: 38,
+            &quot;max_rss_gap_ms&quot;: 6.446166982641444,
+            &quot;max_paired_read_ms&quot;: 0.030458002584055066
           },
           &quot;file&quot;: &quot;raw/case-0-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;1769b232875bdf874e0c9e8ea5b1ccea2b1da5f892142e2ed1597ef8be356b67&quot;
+          &quot;sha256&quot;: &quot;78707637ee37cca7f6546624e35df32cbc4e80ac70149fe1f33dd28469a2cc0d&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 64,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 524288,
-            &quot;duration_s&quot;: 0.20479204101138748,
-            &quot;messages_per_s&quot;: 40001.554550376706,
-            &quot;payload_mib_per_s&quot;: 2.4415011322251408,
+            &quot;duration_s&quot;: 0.22441454100771807,
+            &quot;messages_per_s&quot;: 36503.873426447266,
+            &quot;payload_mib_per_s&quot;: 2.2280196183134318,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.015291996533051133,
-              &quot;p50&quot;: 0.019291997887194157,
-              &quot;p95&quot;: 0.04751889500766992,
-              &quot;p99&quot;: 0.06997303949901837,
-              &quot;max&quot;: 0.44412497663870454
+              &quot;min&quot;: 0.01720801810733974,
+              &quot;p50&quot;: 0.0237500062212348,
+              &quot;p95&quot;: 0.04535244224825873,
+              &quot;p99&quot;: 0.07838626479497181,
+              &quot;max&quot;: 1.6103750094771385
             },
-            &quot;producer_cpu_s&quot;: 0.5163250000000001,
-            &quot;consumer_cpu_s&quot;: 0.591089,
-            &quot;baseline_paired_rss_bytes&quot;: 81444864,
-            &quot;peak_paired_rss_bytes&quot;: 88260608,
-            &quot;rss_sample_count&quot;: 36,
-            &quot;max_rss_gap_ms&quot;: 8.565916999941692,
-            &quot;max_paired_read_ms&quot;: 0.05687499651685357
+            &quot;producer_cpu_s&quot;: 1.010392,
+            &quot;consumer_cpu_s&quot;: 0.9903809999999997,
+            &quot;baseline_paired_rss_bytes&quot;: 81084416,
+            &quot;peak_paired_rss_bytes&quot;: 87752704,
+            &quot;rss_sample_count&quot;: 41,
+            &quot;max_rss_gap_ms&quot;: 6.568499986315146,
+            &quot;max_paired_read_ms&quot;: 0.04520799848251045
           },
           &quot;file&quot;: &quot;raw/case-0-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;387021a655795a83c6dedc00d798fe710bc1d02d938a9bb3424473b90bc06f5a&quot;
+          &quot;sha256&quot;: &quot;e4b4ad3e191e8b5123c24b929f73d67243686c24ed160ed03bb46ad2f017615d&quot;
         }
       ]
     },
@@ -382,235 +478,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.24799287499627098,
-            &quot;messages_per_s&quot;: 33033.207103724984,
-            &quot;payload_mib_per_s&quot;: 32.25899131223143,
+            &quot;duration_s&quot;: 0.23096699998131953,
+            &quot;messages_per_s&quot;: 35468.27036183768,
+            &quot;payload_mib_per_s&quot;: 34.63698277523211,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.015332974726334214,
-              &quot;p50&quot;: 0.023415981559082866,
-              &quot;p95&quot;: 0.05826426058774812,
-              &quot;p99&quot;: 0.12458310724468902,
-              &quot;max&quot;: 8.76649998826906
+              &quot;min&quot;: 0.01754099503159523,
+              &quot;p50&quot;: 0.023500004317611456,
+              &quot;p95&quot;: 0.048537371912971125,
+              &quot;p99&quot;: 0.10382428794400786,
+              &quot;max&quot;: 0.6511249812319875
             },
-            &quot;producer_cpu_s&quot;: 0.8172349999999999,
-            &quot;consumer_cpu_s&quot;: 0.87825,
-            &quot;baseline_paired_rss_bytes&quot;: 81330176,
-            &quot;peak_paired_rss_bytes&quot;: 88047616,
-            &quot;rss_sample_count&quot;: 43,
-            &quot;max_rss_gap_ms&quot;: 8.728292013984174,
-            &quot;max_paired_read_ms&quot;: 0.04820802132599056
+            &quot;producer_cpu_s&quot;: 0.7502260000000001,
+            &quot;consumer_cpu_s&quot;: 0.799444,
+            &quot;baseline_paired_rss_bytes&quot;: 81215488,
+            &quot;peak_paired_rss_bytes&quot;: 88522752,
+            &quot;rss_sample_count&quot;: 41,
+            &quot;max_rss_gap_ms&quot;: 6.299792003119364,
+            &quot;max_paired_read_ms&quot;: 0.03212501178495586
           },
           &quot;file&quot;: &quot;raw/case-1-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;100e42c15794fa85b1b1456bc6a39a04ddaaffc1683741ea2676cc769dd3e2f9&quot;
+          &quot;sha256&quot;: &quot;18d17af22d9dc08a7933b10a70177335619c5b2c39fee3b8ed841c495ad1f256&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.20754870897508226,
-            &quot;messages_per_s&quot;: 39470.25274430162,
-            &quot;payload_mib_per_s&quot;: 38.54516869560705,
+            &quot;duration_s&quot;: 0.22632216598140076,
+            &quot;messages_per_s&quot;: 36196.189465035524,
+            &quot;payload_mib_per_s&quot;: 35.347841274448754,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.014124991139397025,
-              &quot;p50&quot;: 0.020042003598064184,
-              &quot;p95&quot;: 0.048792002780828625,
-              &quot;p99&quot;: 0.07815495424438272,
-              &quot;max&quot;: 0.6383330037351698
+              &quot;min&quot;: 0.01391698606312275,
+              &quot;p50&quot;: 0.019749975763261318,
+              &quot;p95&quot;: 0.03914346016244962,
+              &quot;p99&quot;: 0.05781072046374905,
+              &quot;max&quot;: 26.7172500025481
             },
-            &quot;producer_cpu_s&quot;: 0.4485359999999998,
-            &quot;consumer_cpu_s&quot;: 0.46811999999999987,
-            &quot;baseline_paired_rss_bytes&quot;: 81166336,
-            &quot;peak_paired_rss_bytes&quot;: 88244224,
-            &quot;rss_sample_count&quot;: 37,
-            &quot;max_rss_gap_ms&quot;: 8.494958019582555,
-            &quot;max_paired_read_ms&quot;: 0.048124988097697496
+            &quot;producer_cpu_s&quot;: 0.9803680000000001,
+            &quot;consumer_cpu_s&quot;: 0.9208560000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 81018880,
+            &quot;peak_paired_rss_bytes&quot;: 88473600,
+            &quot;rss_sample_count&quot;: 41,
+            &quot;max_rss_gap_ms&quot;: 6.753958004992455,
+            &quot;max_paired_read_ms&quot;: 0.040332990465685725
           },
           &quot;file&quot;: &quot;raw/case-1-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;ad4da2c98b7dd198a45034f89b68f8737193ceed57169a6b5baedba47c7fe4eb&quot;
+          &quot;sha256&quot;: &quot;13726f85babf4635104d72291fed5af153edf3b3706318aa7dc9a451bb89b430&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.2079643750039395,
-            &quot;messages_per_s&quot;: 39391.36210153695,
-            &quot;payload_mib_per_s&quot;: 38.46812705228218,
+            &quot;duration_s&quot;: 0.27298483400954865,
+            &quot;messages_per_s&quot;: 30008.99309927765,
+            &quot;payload_mib_per_s&quot;: 29.30565732351333,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.01604200224392116,
-              &quot;p50&quot;: 0.02041601692326367,
-              &quot;p95&quot;: 0.04639390244847163,
-              &quot;p99&quot;: 0.07365128753008325,
-              &quot;max&quot;: 0.4532500170171261
+              &quot;min&quot;: 0.0160830095410347,
+              &quot;p50&quot;: 0.024459004634991288,
+              &quot;p95&quot;: 0.07108474528649815,
+              &quot;p99&quot;: 0.12184802966658029,
+              &quot;max&quot;: 2.201041002990678
             },
-            &quot;producer_cpu_s&quot;: 0.586951,
-            &quot;consumer_cpu_s&quot;: 0.601342,
-            &quot;baseline_paired_rss_bytes&quot;: 81477632,
-            &quot;peak_paired_rss_bytes&quot;: 88096768,
-            &quot;rss_sample_count&quot;: 37,
-            &quot;max_rss_gap_ms&quot;: 9.014375013066456,
-            &quot;max_paired_read_ms&quot;: 0.062292005168274045
+            &quot;producer_cpu_s&quot;: 0.6406399999999999,
+            &quot;consumer_cpu_s&quot;: 0.6668990000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 81756160,
+            &quot;peak_paired_rss_bytes&quot;: 88571904,
+            &quot;rss_sample_count&quot;: 48,
+            &quot;max_rss_gap_ms&quot;: 6.954292010050267,
+            &quot;max_paired_read_ms&quot;: 0.05337499896995723
           },
           &quot;file&quot;: &quot;raw/case-1-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f08ca698266bff8c70dc43dc0766d82bbd4db939d23cb60a6b15ad008ed4fb85&quot;
+          &quot;sha256&quot;: &quot;ac28bc33ee08f9f0282f690de6baedfefd8b5bae1b59e9b4207ac90093ff27b5&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.22133570900768973,
-            &quot;messages_per_s&quot;: 37011.65092938253,
-            &quot;payload_mib_per_s&quot;: 36.144190360725126,
+            &quot;duration_s&quot;: 0.24247495798044838,
+            &quot;messages_per_s&quot;: 33784.93213579833,
+            &quot;payload_mib_per_s&quot;: 32.993097788865555,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.016000005416572094,
-              &quot;p50&quot;: 0.02258300082758069,
-              &quot;p95&quot;: 0.04813927080249412,
-              &quot;p99&quot;: 0.08684148167958484,
-              &quot;max&quot;: 2.0488750014919788
+              &quot;min&quot;: 0.015582976629957557,
+              &quot;p50&quot;: 0.02533399674575776,
+              &quot;p95&quot;: 0.048833442269824445,
+              &quot;p99&quot;: 0.09374552202643832,
+              &quot;max&quot;: 0.44449997949413955
             },
-            &quot;producer_cpu_s&quot;: 0.7333479999999999,
-            &quot;consumer_cpu_s&quot;: 0.8567279999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 81412096,
-            &quot;peak_paired_rss_bytes&quot;: 88375296,
-            &quot;rss_sample_count&quot;: 39,
-            &quot;max_rss_gap_ms&quot;: 8.68654201622121,
-            &quot;max_paired_read_ms&quot;: 0.032208976335823536
+            &quot;producer_cpu_s&quot;: 1.091359,
+            &quot;consumer_cpu_s&quot;: 0.9716440000000002,
+            &quot;baseline_paired_rss_bytes&quot;: 81035264,
+            &quot;peak_paired_rss_bytes&quot;: 88096768,
+            &quot;rss_sample_count&quot;: 43,
+            &quot;max_rss_gap_ms&quot;: 6.628958013607189,
+            &quot;max_paired_read_ms&quot;: 0.06879100692458451
           },
           &quot;file&quot;: &quot;raw/case-1-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;4c590d754748eae4d8a8047ae3cd783eb830bf88f57c2e2a7f3abd8ff172c1b3&quot;
+          &quot;sha256&quot;: &quot;79ff7328de5cea0237bd042f3a97b2b32daa3f76e24f0c23f571f3660dd73f28&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.24442070801160298,
-            &quot;messages_per_s&quot;: 33515.981794844956,
-            &quot;payload_mib_per_s&quot;: 32.73045097152828,
+            &quot;duration_s&quot;: 0.24955895799212158,
+            &quot;messages_per_s&quot;: 32825.91042177142,
+            &quot;payload_mib_per_s&quot;: 32.05655314626115,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.015958008589223027,
-              &quot;p50&quot;: 0.025625020498409867,
-              &quot;p95&quot;: 0.050976898637600236,
-              &quot;p99&quot;: 0.0743100160616451,
-              &quot;max&quot;: 0.44850000995211303
+              &quot;min&quot;: 0.017167010810226202,
+              &quot;p50&quot;: 0.02491698251105845,
+              &quot;p95&quot;: 0.04874999285675585,
+              &quot;p99&quot;: 0.06675745738903062,
+              &quot;max&quot;: 11.736542015569285
             },
-            &quot;producer_cpu_s&quot;: 0.5795649999999999,
-            &quot;consumer_cpu_s&quot;: 0.6275710000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 81264640,
-            &quot;peak_paired_rss_bytes&quot;: 88227840,
-            &quot;rss_sample_count&quot;: 43,
-            &quot;max_rss_gap_ms&quot;: 7.575708004878834,
-            &quot;max_paired_read_ms&quot;: 0.0466250057797879
+            &quot;producer_cpu_s&quot;: 0.9020750000000002,
+            &quot;consumer_cpu_s&quot;: 0.9351649999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 80969728,
+            &quot;peak_paired_rss_bytes&quot;: 88145920,
+            &quot;rss_sample_count&quot;: 44,
+            &quot;max_rss_gap_ms&quot;: 6.427292013540864,
+            &quot;max_paired_read_ms&quot;: 0.050709000788629055
           },
           &quot;file&quot;: &quot;raw/case-1-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;0ee06488ffb46d7d3fd95be6444dfe575053154e37dc55e27d90551b7ff7693a&quot;
+          &quot;sha256&quot;: &quot;c5721f2455edf7323ac7d56fed4cfa89335bee473856bd5ed806446faf28e043&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.21143566601676866,
-            &quot;messages_per_s&quot;: 38744.645850574256,
-            &quot;payload_mib_per_s&quot;: 37.83656821345142,
+            &quot;duration_s&quot;: 0.19689916700008325,
+            &quot;messages_per_s&quot;: 41605.051584583576,
+            &quot;payload_mib_per_s&quot;: 40.6299331880699,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.01566598075442016,
-              &quot;p50&quot;: 0.020625011529773474,
-              &quot;p95&quot;: 0.04932934534735976,
-              &quot;p99&quot;: 0.07199552841484552,
-              &quot;max&quot;: 0.4196670197416097
+              &quot;min&quot;: 0.015541998436674476,
+              &quot;p50&quot;: 0.02174999099224806,
+              &quot;p95&quot;: 0.03920799499610439,
+              &quot;p99&quot;: 0.06136684416560462,
+              &quot;max&quot;: 0.48195800627581775
             },
-            &quot;producer_cpu_s&quot;: 0.46585199999999993,
-            &quot;consumer_cpu_s&quot;: 0.47844500000000023,
-            &quot;baseline_paired_rss_bytes&quot;: 81461248,
-            &quot;peak_paired_rss_bytes&quot;: 88309760,
-            &quot;rss_sample_count&quot;: 37,
-            &quot;max_rss_gap_ms&quot;: 8.598666987381876,
-            &quot;max_paired_read_ms&quot;: 0.045666994992643595
+            &quot;producer_cpu_s&quot;: 0.6373439999999999,
+            &quot;consumer_cpu_s&quot;: 0.7257300000000002,
+            &quot;baseline_paired_rss_bytes&quot;: 81231872,
+            &quot;peak_paired_rss_bytes&quot;: 89079808,
+            &quot;rss_sample_count&quot;: 36,
+            &quot;max_rss_gap_ms&quot;: 6.310208002105355,
+            &quot;max_paired_read_ms&quot;: 0.07345800986513495
           },
           &quot;file&quot;: &quot;raw/case-1-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;5859c059801cd6acb04aead2ec798058b494aead9617c9adf89b560de626de7a&quot;
+          &quot;sha256&quot;: &quot;ff0fa32d5f6910dcf2a41a4512e94aa809893e9761445b596b82fd84d6689f45&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.18601008399855345,
-            &quot;messages_per_s&quot;: 44040.62308828218,
-            &quot;payload_mib_per_s&quot;: 43.00842098465056,
+            &quot;duration_s&quot;: 0.2331179580069147,
+            &quot;messages_per_s&quot;: 35141.00788304353,
+            &quot;payload_mib_per_s&quot;: 34.3173905107847,
             &quot;round_trip_ms&quot;: {
               &quot;min&quot;: 0.013374985428526998,
-              &quot;p50&quot;: 0.017458020010963082,
-              &quot;p95&quot;: 0.045185460476204746,
-              &quot;p99&quot;: 0.06592000456294052,
-              &quot;max&quot;: 0.4889999981969595
+              &quot;p50&quot;: 0.02387500717304647,
+              &quot;p95&quot;: 0.05331044812919571,
+              &quot;p99&quot;: 0.08017368993023419,
+              &quot;max&quot;: 0.47820800682529807
             },
-            &quot;producer_cpu_s&quot;: 0.5010239999999999,
-            &quot;consumer_cpu_s&quot;: 0.5156000000000003,
-            &quot;baseline_paired_rss_bytes&quot;: 81510400,
-            &quot;peak_paired_rss_bytes&quot;: 88719360,
-            &quot;rss_sample_count&quot;: 33,
-            &quot;max_rss_gap_ms&quot;: 8.89475000440143,
-            &quot;max_paired_read_ms&quot;: 0.048999994760379195
+            &quot;producer_cpu_s&quot;: 0.7361310000000001,
+            &quot;consumer_cpu_s&quot;: 0.830419,
+            &quot;baseline_paired_rss_bytes&quot;: 81772544,
+            &quot;peak_paired_rss_bytes&quot;: 88555520,
+            &quot;rss_sample_count&quot;: 41,
+            &quot;max_rss_gap_ms&quot;: 6.933625001693144,
+            &quot;max_paired_read_ms&quot;: 0.051916984375566244
           },
           &quot;file&quot;: &quot;raw/case-1-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;deac196b72d5254b2888ccd2d3f9076782392bb32e259d344095bc6442607614&quot;
+          &quot;sha256&quot;: &quot;534ea67cd58418cfbff70312291b74532582e3614f628d2791afd793ebde2dfe&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 1024,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 8388608,
-            &quot;duration_s&quot;: 0.2604148329992313,
-            &quot;messages_per_s&quot;: 31457.501501169027,
-            &quot;payload_mib_per_s&quot;: 30.720216309735378,
+            &quot;duration_s&quot;: 0.24986891701701097,
+            &quot;messages_per_s&quot;: 32785.19032218118,
+            &quot;payload_mib_per_s&quot;: 32.01678742400506,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.01591700129210949,
-              &quot;p50&quot;: 0.02591699012555182,
-              &quot;p95&quot;: 0.0585000088904053,
-              &quot;p99&quot;: 0.12311235535889875,
-              &quot;max&quot;: 0.49612499424256384
+              &quot;min&quot;: 0.016082980437204242,
+              &quot;p50&quot;: 0.025999994250014424,
+              &quot;p95&quot;: 0.05495898803928867,
+              &quot;p99&quot;: 0.07387878926238045,
+              &quot;max&quot;: 0.5088329780846834
             },
-            &quot;producer_cpu_s&quot;: 0.9268539999999998,
-            &quot;consumer_cpu_s&quot;: 0.8463520000000002,
+            &quot;producer_cpu_s&quot;: 0.5728439999999999,
+            &quot;consumer_cpu_s&quot;: 0.5873349999999999,
             &quot;baseline_paired_rss_bytes&quot;: 81494016,
-            &quot;peak_paired_rss_bytes&quot;: 88227840,
-            &quot;rss_sample_count&quot;: 46,
-            &quot;max_rss_gap_ms&quot;: 8.506250014761463,
-            &quot;max_paired_read_ms&quot;: 0.03412499791011214
+            &quot;peak_paired_rss_bytes&quot;: 88244224,
+            &quot;rss_sample_count&quot;: 44,
+            &quot;max_rss_gap_ms&quot;: 6.325333000859246,
+            &quot;max_paired_read_ms&quot;: 0.04895799793303013
           },
           &quot;file&quot;: &quot;raw/case-1-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f3cb6611d16e11dd4eab3473ecd9c85132c9e035e6664ffabe10751b960a112a&quot;
+          &quot;sha256&quot;: &quot;b2e50609cca782cf6f86897b44d582a76292e9c2348e9c7671710e46b5fd8b91&quot;
         }
       ]
     },
@@ -621,235 +725,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.4398285410134122,
-            &quot;messages_per_s&quot;: 18625.43977051774,
-            &quot;payload_mib_per_s&quot;: 291.0224964143397,
+            &quot;duration_s&quot;: 0.39506679101032205,
+            &quot;messages_per_s&quot;: 20735.73427685539,
+            &quot;payload_mib_per_s&quot;: 323.99584807586547,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.026416993932798505,
-              &quot;p50&quot;: 0.040417013224214315,
-              &quot;p95&quot;: 0.08116644312394783,
-              &quot;p99&quot;: 0.12488546431995937,
-              &quot;max&quot;: 57.66912500257604
+              &quot;min&quot;: 0.02445801510475576,
+              &quot;p50&quot;: 0.03979200846515596,
+              &quot;p95&quot;: 0.07612499757669866,
+              &quot;p99&quot;: 0.10197761497693139,
+              &quot;max&quot;: 24.403040995821357
             },
-            &quot;producer_cpu_s&quot;: 1.063467,
-            &quot;consumer_cpu_s&quot;: 1.190818,
-            &quot;baseline_paired_rss_bytes&quot;: 81559552,
-            &quot;peak_paired_rss_bytes&quot;: 88571904,
-            &quot;rss_sample_count&quot;: 74,
-            &quot;max_rss_gap_ms&quot;: 7.83662500907667,
-            &quot;max_paired_read_ms&quot;: 0.06175000453367829
+            &quot;producer_cpu_s&quot;: 0.89361,
+            &quot;consumer_cpu_s&quot;: 0.88537,
+            &quot;baseline_paired_rss_bytes&quot;: 81444864,
+            &quot;peak_paired_rss_bytes&quot;: 88604672,
+            &quot;rss_sample_count&quot;: 67,
+            &quot;max_rss_gap_ms&quot;: 6.745124992448837,
+            &quot;max_paired_read_ms&quot;: 0.050292001105844975
           },
           &quot;file&quot;: &quot;raw/case-2-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;1cd3caa8d5d1aa8a0da9d33c54a62c2628f06c8fd47ed749c7da5dc9a696ef3a&quot;
+          &quot;sha256&quot;: &quot;4e5047c633eacdf02b65efb3929d77ecd8d4a29d29091badb5c2e90a1868a110&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.2570473329978995,
-            &quot;messages_per_s&quot;: 31869.616791810644,
-            &quot;payload_mib_per_s&quot;: 497.9627623720413,
+            &quot;duration_s&quot;: 0.30154108299757354,
+            &quot;messages_per_s&quot;: 27167.110758390158,
+            &quot;payload_mib_per_s&quot;: 424.4861055998462,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.018708989955484867,
-              &quot;p50&quot;: 0.025166984414681792,
-              &quot;p95&quot;: 0.05929199542151764,
-              &quot;p99&quot;: 0.10171546251513065,
-              &quot;max&quot;: 0.5782080115750432
+              &quot;min&quot;: 0.018624996300786734,
+              &quot;p50&quot;: 0.027708010748028755,
+              &quot;p95&quot;: 0.05633345426758751,
+              &quot;p99&quot;: 0.07455314305843787,
+              &quot;max&quot;: 38.17650000564754
             },
-            &quot;producer_cpu_s&quot;: 0.7092050000000001,
-            &quot;consumer_cpu_s&quot;: 0.679019,
+            &quot;producer_cpu_s&quot;: 0.810529,
+            &quot;consumer_cpu_s&quot;: 0.8794959999999998,
             &quot;baseline_paired_rss_bytes&quot;: 81543168,
-            &quot;peak_paired_rss_bytes&quot;: 88834048,
-            &quot;rss_sample_count&quot;: 45,
-            &quot;max_rss_gap_ms&quot;: 8.609250013250858,
-            &quot;max_paired_read_ms&quot;: 0.05208401125855744
+            &quot;peak_paired_rss_bytes&quot;: 88719360,
+            &quot;rss_sample_count&quot;: 53,
+            &quot;max_rss_gap_ms&quot;: 6.340417021419853,
+            &quot;max_paired_read_ms&quot;: 0.05204201443120837
           },
           &quot;file&quot;: &quot;raw/case-2-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;b53656a0517b93ddf06eda954fe88ac1252c94a1d162562db318f94b24f027f0&quot;
+          &quot;sha256&quot;: &quot;53a745322febcc19b0010d3fb98a4e5e4ef3a42843d8e9e494660beccb232675&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.21883412500028498,
-            &quot;messages_per_s&quot;: 37434.74652314547,
-            &quot;payload_mib_per_s&quot;: 584.917914424148,
+            &quot;duration_s&quot;: 0.26509208299103193,
+            &quot;messages_per_s&quot;: 30902.469464835493,
+            &quot;payload_mib_per_s&quot;: 482.85108538805457,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.017207989003509283,
-              &quot;p50&quot;: 0.021083018509671092,
-              &quot;p95&quot;: 0.050976898637600236,
-              &quot;p99&quot;: 0.08291243168059742,
-              &quot;max&quot;: 0.4362089966889471
+              &quot;min&quot;: 0.01662501017563045,
+              &quot;p50&quot;: 0.023250002413988113,
+              &quot;p95&quot;: 0.05004199920222163,
+              &quot;p99&quot;: 0.08106819062959407,
+              &quot;max&quot;: 19.65445899986662
             },
-            &quot;producer_cpu_s&quot;: 0.51783,
-            &quot;consumer_cpu_s&quot;: 0.5406549999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 81330176,
-            &quot;peak_paired_rss_bytes&quot;: 88506368,
-            &quot;rss_sample_count&quot;: 39,
-            &quot;max_rss_gap_ms&quot;: 8.547124976757914,
-            &quot;max_paired_read_ms&quot;: 0.04529199213720858
+            &quot;producer_cpu_s&quot;: 0.9549050000000001,
+            &quot;consumer_cpu_s&quot;: 1.086124,
+            &quot;baseline_paired_rss_bytes&quot;: 81297408,
+            &quot;peak_paired_rss_bytes&quot;: 88539136,
+            &quot;rss_sample_count&quot;: 47,
+            &quot;max_rss_gap_ms&quot;: 6.442999991122633,
+            &quot;max_paired_read_ms&quot;: 0.0543750065844506
           },
           &quot;file&quot;: &quot;raw/case-2-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;1e2af3e790f020631c7d9783e7ddd81dd6b4404edf23477af61d057af7aba4a2&quot;
+          &quot;sha256&quot;: &quot;3aa6a3ed948f0ad5cb36835320b80a0883b6f3aa97b16f4f7c31a6eed61c74ea&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.3865449579898268,
-            &quot;messages_per_s&quot;: 21192.877647664463,
-            &quot;payload_mib_per_s&quot;: 331.13871324475724,
+            &quot;duration_s&quot;: 0.35794683400308713,
+            &quot;messages_per_s&quot;: 22886.08033876156,
+            &quot;payload_mib_per_s&quot;: 357.59500529314937,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.029624992748722434,
-              &quot;p50&quot;: 0.0425000034738332,
-              &quot;p95&quot;: 0.07289024506462735,
-              &quot;p99&quot;: 0.10702627972932537,
-              &quot;max&quot;: 0.9142500057350844
+              &quot;min&quot;: 0.023500004317611456,
+              &quot;p50&quot;: 0.037416990380734205,
+              &quot;p95&quot;: 0.07353734545176847,
+              &quot;p99&quot;: 0.10836775327334186,
+              &quot;max&quot;: 1.1251250107306987
             },
-            &quot;producer_cpu_s&quot;: 0.8087550000000001,
-            &quot;consumer_cpu_s&quot;: 0.7401140000000002,
-            &quot;baseline_paired_rss_bytes&quot;: 81592320,
-            &quot;peak_paired_rss_bytes&quot;: 88834048,
-            &quot;rss_sample_count&quot;: 66,
-            &quot;max_rss_gap_ms&quot;: 8.349582989467308,
-            &quot;max_paired_read_ms&quot;: 0.05783297820016742
+            &quot;producer_cpu_s&quot;: 0.945095,
+            &quot;consumer_cpu_s&quot;: 1.002272,
+            &quot;baseline_paired_rss_bytes&quot;: 81362944,
+            &quot;peak_paired_rss_bytes&quot;: 88604672,
+            &quot;rss_sample_count&quot;: 62,
+            &quot;max_rss_gap_ms&quot;: 6.332291988655925,
+            &quot;max_paired_read_ms&quot;: 0.08333299774676561
           },
           &quot;file&quot;: &quot;raw/case-2-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;10105b43a973d84e4dfcf319bb5aac712cf9f3595ce9a8a20c15642eda11fac8&quot;
+          &quot;sha256&quot;: &quot;9e8bce79101dc5803ed7d5cba9d9f39af33e8d84e4b5ba9bd61afa000ae10d43&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.3925267499871552,
-            &quot;messages_per_s&quot;: 20869.91523575927,
-            &quot;payload_mib_per_s&quot;: 326.09242555873857,
+            &quot;duration_s&quot;: 0.38091112501570024,
+            &quot;messages_per_s&quot;: 21506.329067344373,
+            &quot;payload_mib_per_s&quot;: 336.03639167725584,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.02649999805726111,
-              &quot;p50&quot;: 0.041207997128367424,
-              &quot;p95&quot;: 0.08185189799405633,
-              &quot;p99&quot;: 0.13796949613606566,
-              &quot;max&quot;: 1.0927080002147704
+              &quot;min&quot;: 0.02950002090074122,
+              &quot;p50&quot;: 0.04158299998380244,
+              &quot;p95&quot;: 0.07104199758032337,
+              &quot;p99&quot;: 0.0957418439793401,
+              &quot;max&quot;: 0.9589169931132346
             },
-            &quot;producer_cpu_s&quot;: 0.7704130000000002,
-            &quot;consumer_cpu_s&quot;: 0.799085,
-            &quot;baseline_paired_rss_bytes&quot;: 81657856,
-            &quot;peak_paired_rss_bytes&quot;: 88899584,
-            &quot;rss_sample_count&quot;: 67,
-            &quot;max_rss_gap_ms&quot;: 8.753208006964996,
-            &quot;max_paired_read_ms&quot;: 0.047999987145885825
+            &quot;producer_cpu_s&quot;: 0.6686450000000002,
+            &quot;consumer_cpu_s&quot;: 0.6781410000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 81248256,
+            &quot;peak_paired_rss_bytes&quot;: 88637440,
+            &quot;rss_sample_count&quot;: 65,
+            &quot;max_rss_gap_ms&quot;: 6.3143339939415455,
+            &quot;max_paired_read_ms&quot;: 0.04087499110028148
           },
           &quot;file&quot;: &quot;raw/case-2-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;6bf3b7391c7e08bc1d4ad0db7a3c3d663edf9804dc10e622a45f457c5628a8d9&quot;
+          &quot;sha256&quot;: &quot;6923af7d3833afb549f55847ffb42f19d0c997cc3e4ac5600e785c508f23c8f6&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.23678962502162904,
-            &quot;messages_per_s&quot;: 34596.11036273958,
-            &quot;payload_mib_per_s&quot;: 540.5642244178059,
+            &quot;duration_s&quot;: 0.1971241659775842,
+            &quot;messages_per_s&quot;: 41557.56327172766,
+            &quot;payload_mib_per_s&quot;: 649.3369261207447,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.0186669931281358,
-              &quot;p50&quot;: 0.023667002096772194,
-              &quot;p95&quot;: 0.05204201443120837,
-              &quot;p99&quot;: 0.08517069276422262,
-              &quot;max&quot;: 0.4913329903502017
+              &quot;min&quot;: 0.017082988051697612,
+              &quot;p50&quot;: 0.020666499040089548,
+              &quot;p95&quot;: 0.04012498538941145,
+              &quot;p99&quot;: 0.06936604419024674,
+              &quot;max&quot;: 0.4450000124052167
             },
-            &quot;producer_cpu_s&quot;: 0.505382,
-            &quot;consumer_cpu_s&quot;: 0.5680419999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 81330176,
-            &quot;peak_paired_rss_bytes&quot;: 88473600,
-            &quot;rss_sample_count&quot;: 41,
-            &quot;max_rss_gap_ms&quot;: 8.197209011996165,
-            &quot;max_paired_read_ms&quot;: 0.052207993576303124
+            &quot;producer_cpu_s&quot;: 0.5666620000000002,
+            &quot;consumer_cpu_s&quot;: 0.6039780000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 81182720,
+            &quot;peak_paired_rss_bytes&quot;: 88391680,
+            &quot;rss_sample_count&quot;: 35,
+            &quot;max_rss_gap_ms&quot;: 6.40704101533629,
+            &quot;max_paired_read_ms&quot;: 0.04945797263644636
           },
           &quot;file&quot;: &quot;raw/case-2-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;f3d8bf241fea3f81458c4193d910a75979967040d9c74c4c77b238d6fdad6090&quot;
+          &quot;sha256&quot;: &quot;7fc8fc501a605433c84b2123c359e29a0f05cfa512a11a32061c168466ca4f2c&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.22304524999344721,
-            &quot;messages_per_s&quot;: 36727.97336074483,
-            &quot;payload_mib_per_s&quot;: 573.874583761638,
+            &quot;duration_s&quot;: 0.30270720800035633,
+            &quot;messages_per_s&quot;: 27062.45435685283,
+            &quot;payload_mib_per_s&quot;: 422.8508493258255,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.016499980119988322,
-              &quot;p50&quot;: 0.020832987502217293,
-              &quot;p95&quot;: 0.053643441060557955,
-              &quot;p99&quot;: 0.0812155700987205,
-              &quot;max&quot;: 1.3103749952279031
+              &quot;min&quot;: 0.01624997821636498,
+              &quot;p50&quot;: 0.020291015971451998,
+              &quot;p95&quot;: 0.03831089561572298,
+              &quot;p99&quot;: 0.06389371206751096,
+              &quot;max&quot;: 93.53995800483972
             },
-            &quot;producer_cpu_s&quot;: 0.5501180000000001,
-            &quot;consumer_cpu_s&quot;: 0.544249,
-            &quot;baseline_paired_rss_bytes&quot;: 81461248,
-            &quot;peak_paired_rss_bytes&quot;: 88653824,
-            &quot;rss_sample_count&quot;: 40,
-            &quot;max_rss_gap_ms&quot;: 8.334957994520664,
-            &quot;max_paired_read_ms&quot;: 0.05125001189298928
+            &quot;producer_cpu_s&quot;: 1.2724889999999998,
+            &quot;consumer_cpu_s&quot;: 1.251255,
+            &quot;baseline_paired_rss_bytes&quot;: 81543168,
+            &quot;peak_paired_rss_bytes&quot;: 88735744,
+            &quot;rss_sample_count&quot;: 53,
+            &quot;max_rss_gap_ms&quot;: 6.453540991060436,
+            &quot;max_paired_read_ms&quot;: 0.04079201607964933
           },
           &quot;file&quot;: &quot;raw/case-2-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;527297b01b702ad67a5f68416a17704e0e3362eac962a47b191b7703e442b211&quot;
+          &quot;sha256&quot;: &quot;d7760db7937a9fc46517d039a3600a4d36e13717b386d86147aa9fd2ed0cf875&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 16384,
           &quot;count&quot;: 8192,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 8192,
             &quot;verified_payload_bytes&quot;: 134217728,
-            &quot;duration_s&quot;: 0.4436693750030827,
-            &quot;messages_per_s&quot;: 18464.19983336258,
-            &quot;payload_mib_per_s&quot;: 288.50312239629034,
+            &quot;duration_s&quot;: 0.3735013749974314,
+            &quot;messages_per_s&quot;: 21932.984851946894,
+            &quot;payload_mib_per_s&quot;: 342.7028883116702,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.028332986403256655,
-              &quot;p50&quot;: 0.04125002305954695,
-              &quot;p95&quot;: 0.0779354610131122,
-              &quot;p99&quot;: 0.12389751209411774,
-              &quot;max&quot;: 31.377000006614253
+              &quot;min&quot;: 0.02575002145022154,
+              &quot;p50&quot;: 0.040417013224214315,
+              &quot;p95&quot;: 0.06726888677803798,
+              &quot;p99&quot;: 0.1043451626901515,
+              &quot;max&quot;: 6.400957994628698
             },
-            &quot;producer_cpu_s&quot;: 0.9717180000000001,
-            &quot;consumer_cpu_s&quot;: 0.9807839999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 81543168,
-            &quot;peak_paired_rss_bytes&quot;: 88768512,
-            &quot;rss_sample_count&quot;: 75,
-            &quot;max_rss_gap_ms&quot;: 7.649833976756781,
-            &quot;max_paired_read_ms&quot;: 0.07154198829084635
+            &quot;producer_cpu_s&quot;: 0.8485289999999999,
+            &quot;consumer_cpu_s&quot;: 1.141473,
+            &quot;baseline_paired_rss_bytes&quot;: 81379328,
+            &quot;peak_paired_rss_bytes&quot;: 88604672,
+            &quot;rss_sample_count&quot;: 63,
+            &quot;max_rss_gap_ms&quot;: 6.942707987036556,
+            &quot;max_paired_read_ms&quot;: 0.05508301546797156
           },
           &quot;file&quot;: &quot;raw/case-2-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;21bae322e6c29188db9175552c41b8c1cbe7a1b88fd2c296033707c19369c303&quot;
+          &quot;sha256&quot;: &quot;e767595f646840499b00062384ac1d07c98a5727a52a371128741eee97040010&quot;
         }
       ]
     },
@@ -860,235 +972,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.3207449589972384,
-            &quot;messages_per_s&quot;: 3192.5677123699284,
-            &quot;payload_mib_per_s&quot;: 798.1419280924821,
+            &quot;duration_s&quot;: 0.32147420800174586,
+            &quot;messages_per_s&quot;: 3185.3255238269035,
+            &quot;payload_mib_per_s&quot;: 796.3313809567259,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.20345899974927306,
-              &quot;p50&quot;: 0.2721250057220459,
-              &quot;p95&quot;: 0.46166605025064195,
-              &quot;p99&quot;: 0.5591551554971373,
-              &quot;max&quot;: 0.7997500069905072
+              &quot;min&quot;: 0.17783301882445812,
+              &quot;p50&quot;: 0.27093698736280203,
+              &quot;p95&quot;: 0.43345811427570863,
+              &quot;p99&quot;: 0.5373309948481619,
+              &quot;max&quot;: 12.753167015034705
             },
-            &quot;producer_cpu_s&quot;: 0.4195089999999999,
-            &quot;consumer_cpu_s&quot;: 0.484078,
-            &quot;baseline_paired_rss_bytes&quot;: 83394560,
-            &quot;peak_paired_rss_bytes&quot;: 84295680,
-            &quot;rss_sample_count&quot;: 55,
-            &quot;max_rss_gap_ms&quot;: 6.927541980985552,
-            &quot;max_paired_read_ms&quot;: 0.05870801396667957
+            &quot;producer_cpu_s&quot;: 1.0729190000000002,
+            &quot;consumer_cpu_s&quot;: 1.202709,
+            &quot;baseline_paired_rss_bytes&quot;: 83165184,
+            &quot;peak_paired_rss_bytes&quot;: 84180992,
+            &quot;rss_sample_count&quot;: 56,
+            &quot;max_rss_gap_ms&quot;: 6.351874995743856,
+            &quot;max_paired_read_ms&quot;: 0.0405839818995446
           },
           &quot;file&quot;: &quot;raw/case-3-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;8e4a267c6bf5baea9442cf114a62449dc7bae90eff040518c02c21a531513960&quot;
+          &quot;sha256&quot;: &quot;4e29e05af415465a653acfca27032b3dfe1e84be81e5089c2ad1fb32f9179c46&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.0871036660100799,
-            &quot;messages_per_s&quot;: 11756.10679671622,
-            &quot;payload_mib_per_s&quot;: 2939.026699179055,
+            &quot;duration_s&quot;: 0.17466545797651634,
+            &quot;messages_per_s&quot;: 5862.635989181536,
+            &quot;payload_mib_per_s&quot;: 1465.658997295384,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.07079198257997632,
-              &quot;p50&quot;: 0.07543749234173447,
-              &quot;p95&quot;: 0.1240705620148219,
-              &quot;p99&quot;: 0.1851271494524553,
-              &quot;max&quot;: 0.27325001428835094
+              &quot;min&quot;: 0.0715420173946768,
+              &quot;p50&quot;: 0.11077099770773202,
+              &quot;p95&quot;: 0.22407494834624175,
+              &quot;p99&quot;: 1.4471993365441378,
+              &quot;max&quot;: 14.142832980724052
             },
-            &quot;producer_cpu_s&quot;: 0.21379199999999976,
-            &quot;consumer_cpu_s&quot;: 0.21457599999999988,
-            &quot;baseline_paired_rss_bytes&quot;: 82542592,
+            &quot;producer_cpu_s&quot;: 0.3118909999999999,
+            &quot;consumer_cpu_s&quot;: 0.354333,
+            &quot;baseline_paired_rss_bytes&quot;: 82591744,
             &quot;peak_paired_rss_bytes&quot;: 83509248,
-            &quot;rss_sample_count&quot;: 17,
-            &quot;max_rss_gap_ms&quot;: 7.0284999965224415,
-            &quot;max_paired_read_ms&quot;: 0.0618330086581409
+            &quot;rss_sample_count&quot;: 28,
+            &quot;max_rss_gap_ms&quot;: 18.978459003847092,
+            &quot;max_paired_read_ms&quot;: 0.37429199437610805
           },
           &quot;file&quot;: &quot;raw/case-3-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;b643d713d9ecbdaf7705928898dcb15f2b2855c45687e05fe6e0e7bda8656b53&quot;
+          &quot;sha256&quot;: &quot;7411617dcc910295d821be49bc4b1fd2767124cfedc9154940a02a5e94fe0542&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.10222912498284131,
-            &quot;messages_per_s&quot;: 10016.714905579733,
-            &quot;payload_mib_per_s&quot;: 2504.178726394933,
+            &quot;duration_s&quot;: 0.11665037498460151,
+            &quot;messages_per_s&quot;: 8778.368694787081,
+            &quot;payload_mib_per_s&quot;: 2194.5921736967703,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.07079099304974079,
-              &quot;p50&quot;: 0.09868749475572258,
-              &quot;p95&quot;: 0.16200438403757278,
-              &quot;p99&quot;: 0.2306250028777867,
-              &quot;max&quot;: 0.3722909896168858
+              &quot;min&quot;: 0.06954098353162408,
+              &quot;p50&quot;: 0.10452049900777638,
+              &quot;p95&quot;: 0.1426954389899037,
+              &quot;p99&quot;: 0.24397999310167492,
+              &quot;max&quot;: 4.976208001608029
             },
-            &quot;producer_cpu_s&quot;: 0.4772319999999999,
-            &quot;consumer_cpu_s&quot;: 0.4240900000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 82755584,
-            &quot;peak_paired_rss_bytes&quot;: 83673088,
-            &quot;rss_sample_count&quot;: 20,
-            &quot;max_rss_gap_ms&quot;: 6.890125019708648,
-            &quot;max_paired_read_ms&quot;: 0.050125003326684237
+            &quot;producer_cpu_s&quot;: 0.617275,
+            &quot;consumer_cpu_s&quot;: 0.6588259999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 82509824,
+            &quot;peak_paired_rss_bytes&quot;: 83574784,
+            &quot;rss_sample_count&quot;: 23,
+            &quot;max_rss_gap_ms&quot;: 6.331540993414819,
+            &quot;max_paired_read_ms&quot;: 0.051207985961809754
           },
           &quot;file&quot;: &quot;raw/case-3-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;6ef31f8f5a07c8eec98fec85d1fc482a667fc5d6d73600ba8857144fb5c1acac&quot;
+          &quot;sha256&quot;: &quot;10d4f67674f53ad429734d1111d8ba418d53d871c56b8b8f41a53c8b820e0e05&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.37254399998346344,
-            &quot;messages_per_s&quot;: 2748.6686137622764,
-            &quot;payload_mib_per_s&quot;: 687.1671534405691,
+            &quot;duration_s&quot;: 0.31391516700387,
+            &quot;messages_per_s&quot;: 3262.0277948767475,
+            &quot;payload_mib_per_s&quot;: 815.5069487191869,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.203415984287858,
-              &quot;p50&quot;: 0.2932505158241838,
-              &quot;p95&quot;: 0.6999330318649297,
-              &quot;p99&quot;: 0.8556564286118369,
-              &quot;max&quot;: 1.306334015680477
+              &quot;min&quot;: 0.17833299352787435,
+              &quot;p50&quot;: 0.2724164951359853,
+              &quot;p95&quot;: 0.4368812093161975,
+              &quot;p99&quot;: 0.5139546570717356,
+              &quot;max&quot;: 0.7827089866623282
             },
-            &quot;producer_cpu_s&quot;: 1.110825,
-            &quot;consumer_cpu_s&quot;: 1.0550869999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 82903040,
-            &quot;peak_paired_rss_bytes&quot;: 83902464,
-            &quot;rss_sample_count&quot;: 63,
-            &quot;max_rss_gap_ms&quot;: 6.481666991021484,
-            &quot;max_paired_read_ms&quot;: 0.06500000017695129
+            &quot;producer_cpu_s&quot;: 0.9107459999999998,
+            &quot;consumer_cpu_s&quot;: 1.0327559999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 82067456,
+            &quot;peak_paired_rss_bytes&quot;: 83443712,
+            &quot;rss_sample_count&quot;: 54,
+            &quot;max_rss_gap_ms&quot;: 6.485833000624552,
+            &quot;max_paired_read_ms&quot;: 0.060708000091835856
           },
           &quot;file&quot;: &quot;raw/case-3-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;722078e4f39f2faa6511739ebbe9b279054ade8e0b6f0f6cddf6763b05e12fa1&quot;
+          &quot;sha256&quot;: &quot;935751a03668d036eebca6fded1e92ff82fcb5d6078792dad8c06eb604f82b86&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.3215056250046473,
-            &quot;messages_per_s&quot;: 3185.0142590357423,
-            &quot;payload_mib_per_s&quot;: 796.2535647589356,
+            &quot;duration_s&quot;: 0.3711117919883691,
+            &quot;messages_per_s&quot;: 2759.2763746835967,
+            &quot;payload_mib_per_s&quot;: 689.8190936708992,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.17862499225884676,
-              &quot;p50&quot;: 0.27689599664881825,
-              &quot;p95&quot;: 0.4558607048238626,
-              &quot;p99&quot;: 0.5767715879483147,
-              &quot;max&quot;: 1.0926249960903078
+              &quot;min&quot;: 0.18841598648577929,
+              &quot;p50&quot;: 0.3270839952165261,
+              &quot;p95&quot;: 0.6682250575977369,
+              &quot;p99&quot;: 0.9158123459201304,
+              &quot;max&quot;: 1.4502919802907854
             },
-            &quot;producer_cpu_s&quot;: 0.76966,
-            &quot;consumer_cpu_s&quot;: 0.8303959999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 83034112,
-            &quot;peak_paired_rss_bytes&quot;: 84115456,
-            &quot;rss_sample_count&quot;: 55,
-            &quot;max_rss_gap_ms&quot;: 6.885125010740012,
-            &quot;max_paired_read_ms&quot;: 0.07816698052920401
+            &quot;producer_cpu_s&quot;: 0.725509,
+            &quot;consumer_cpu_s&quot;: 0.8323879999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 82804736,
+            &quot;peak_paired_rss_bytes&quot;: 83886080,
+            &quot;rss_sample_count&quot;: 64,
+            &quot;max_rss_gap_ms&quot;: 6.373167008860037,
+            &quot;max_paired_read_ms&quot;: 0.17637500423006713
           },
           &quot;file&quot;: &quot;raw/case-3-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;e2c8b92af1c4047896c435840094a326c8e4dfd1536021e09a3517c5773dc032&quot;
+          &quot;sha256&quot;: &quot;b8af16df65f7e05b991399e5fa8a109d29310c68cc2f646534b5bb56ec10c903&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.11142595802084543,
-            &quot;messages_per_s&quot;: 9189.95912791193,
-            &quot;payload_mib_per_s&quot;: 2297.4897819779826,
+            &quot;duration_s&quot;: 0.10549129100400023,
+            &quot;messages_per_s&quot;: 9706.962444522267,
+            &quot;payload_mib_per_s&quot;: 2426.740611130567,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.07066698162816465,
-              &quot;p50&quot;: 0.10685449524316937,
-              &quot;p95&quot;: 0.1438205668819137,
-              &quot;p99&quot;: 0.2282087568892166,
-              &quot;max&quot;: 0.25129198911599815
+              &quot;min&quot;: 0.07070900755934417,
+              &quot;p50&quot;: 0.09337501251138747,
+              &quot;p95&quot;: 0.17546689487062384,
+              &quot;p99&quot;: 0.22768969123717397,
+              &quot;max&quot;: 0.27191598201170564
             },
-            &quot;producer_cpu_s&quot;: 0.6293520000000001,
-            &quot;consumer_cpu_s&quot;: 0.620404,
-            &quot;baseline_paired_rss_bytes&quot;: 82706432,
-            &quot;peak_paired_rss_bytes&quot;: 83673088,
-            &quot;rss_sample_count&quot;: 22,
-            &quot;max_rss_gap_ms&quot;: 6.853708007838577,
-            &quot;max_paired_read_ms&quot;: 0.04129199078306556
+            &quot;producer_cpu_s&quot;: 0.24655199999999988,
+            &quot;consumer_cpu_s&quot;: 0.2574080000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 78495744,
+            &quot;peak_paired_rss_bytes&quot;: 79380480,
+            &quot;rss_sample_count&quot;: 21,
+            &quot;max_rss_gap_ms&quot;: 6.346040987409651,
+            &quot;max_paired_read_ms&quot;: 0.1050409919116646
           },
           &quot;file&quot;: &quot;raw/case-3-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;fc8ac8dfbcf46298ec9bef7c6edaac2484fcf0f96cb2edac810e9ce588b649ba&quot;
+          &quot;sha256&quot;: &quot;b2b4db22423cc84c95b3e0e01aa9607cc54be2fce21a676f91303010828b31dd&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.15328083399799652,
-            &quot;messages_per_s&quot;: 6680.548202219361,
-            &quot;payload_mib_per_s&quot;: 1670.1370505548402,
+            &quot;duration_s&quot;: 0.10090229197521694,
+            &quot;messages_per_s&quot;: 10148.431516813405,
+            &quot;payload_mib_per_s&quot;: 2537.1078792033513,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.07033400470390916,
-              &quot;p50&quot;: 0.10514548921491951,
-              &quot;p95&quot;: 0.18850890337489534,
-              &quot;p99&quot;: 0.2918640922871416,
-              &quot;max&quot;: 40.14633398037404
+              &quot;min&quot;: 0.06824999582022429,
+              &quot;p50&quot;: 0.09354150097351521,
+              &quot;p95&quot;: 0.15547680668532773,
+              &quot;p99&quot;: 0.22958425543038172,
+              &quot;max&quot;: 0.3384589799679816
             },
-            &quot;producer_cpu_s&quot;: 0.8626889999999999,
-            &quot;consumer_cpu_s&quot;: 0.872031,
-            &quot;baseline_paired_rss_bytes&quot;: 82755584,
-            &quot;peak_paired_rss_bytes&quot;: 83640320,
-            &quot;rss_sample_count&quot;: 29,
-            &quot;max_rss_gap_ms&quot;: 6.959165999433026,
-            &quot;max_paired_read_ms&quot;: 0.06133300485089421
+            &quot;producer_cpu_s&quot;: 0.4074519999999999,
+            &quot;consumer_cpu_s&quot;: 0.484642,
+            &quot;baseline_paired_rss_bytes&quot;: 83050496,
+            &quot;peak_paired_rss_bytes&quot;: 84049920,
+            &quot;rss_sample_count&quot;: 20,
+            &quot;max_rss_gap_ms&quot;: 6.394750002073124,
+            &quot;max_paired_read_ms&quot;: 0.07083397940732539
           },
           &quot;file&quot;: &quot;raw/case-3-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;a8b33fb86770f29c6adff07032cb9d50e67ff9a12dabc002106e179f30f57374&quot;
+          &quot;sha256&quot;: &quot;d8bbbc9b5b5633bc09c2e62c6f18eda2f9b6a821f1f00d07b51e02b3445e3d46&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 262144,
           &quot;count&quot;: 1024,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 1024,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.3662335839762818,
-            &quot;messages_per_s&quot;: 2796.0297602480846,
-            &quot;payload_mib_per_s&quot;: 699.0074400620211,
+            &quot;duration_s&quot;: 0.318477583990898,
+            &quot;messages_per_s&quot;: 3215.2969360294624,
+            &quot;payload_mib_per_s&quot;: 803.8242340073656,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.22950000129640102,
-              &quot;p50&quot;: 0.29327099036891013,
-              &quot;p95&quot;: 0.6419768891646518,
-              &quot;p99&quot;: 1.0577533906325696,
-              &quot;max&quot;: 1.6821249737404287
+              &quot;min&quot;: 0.18133400590159,
+              &quot;p50&quot;: 0.27779099764302373,
+              &quot;p95&quot;: 0.43509994575288147,
+              &quot;p99&quot;: 0.4798708940506912,
+              &quot;max&quot;: 1.5888749912846833
             },
-            &quot;producer_cpu_s&quot;: 0.7798209999999999,
-            &quot;consumer_cpu_s&quot;: 0.9064019999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 82575360,
-            &quot;peak_paired_rss_bytes&quot;: 83591168,
-            &quot;rss_sample_count&quot;: 62,
-            &quot;max_rss_gap_ms&quot;: 6.816084001911804,
-            &quot;max_paired_read_ms&quot;: 0.043625012040138245
+            &quot;producer_cpu_s&quot;: 0.8083940000000001,
+            &quot;consumer_cpu_s&quot;: 0.873829,
+            &quot;baseline_paired_rss_bytes&quot;: 82526208,
+            &quot;peak_paired_rss_bytes&quot;: 83836928,
+            &quot;rss_sample_count&quot;: 55,
+            &quot;max_rss_gap_ms&quot;: 6.326750008156523,
+            &quot;max_paired_read_ms&quot;: 0.04237500252202153
           },
           &quot;file&quot;: &quot;raw/case-3-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;ceeaa76d2f0d59437c240c56575964fab5daded1350372c8a2703b81ad0aac8c&quot;
+          &quot;sha256&quot;: &quot;5f0bc9e3e4d51a5c67ac457c2e1af7b2b17d72b4c9983c0530cd7f71f634dd44&quot;
         }
       ]
     },
@@ -1099,235 +1219,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.41755670902784914,
-            &quot;messages_per_s&quot;: 613.09037662457,
-            &quot;payload_mib_per_s&quot;: 613.09037662457,
+            &quot;duration_s&quot;: 0.29751712500001304,
+            &quot;messages_per_s&quot;: 860.454671306698,
+            &quot;payload_mib_per_s&quot;: 860.454671306698,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.7840420003049076,
-              &quot;p50&quot;: 1.0090204741572961,
-              &quot;p95&quot;: 1.5841980130062439,
-              &quot;p99&quot;: 2.5325483962660655,
-              &quot;max&quot;: 127.63170900871046
+              &quot;min&quot;: 0.753250002162531,
+              &quot;p50&quot;: 1.0870625119423494,
+              &quot;p95&quot;: 1.5480730144190602,
+              &quot;p99&quot;: 1.7309604343608949,
+              &quot;max&quot;: 2.639374986756593
             },
-            &quot;producer_cpu_s&quot;: 1.2629110000000003,
-            &quot;consumer_cpu_s&quot;: 1.392238,
-            &quot;baseline_paired_rss_bytes&quot;: 88555520,
-            &quot;peak_paired_rss_bytes&quot;: 89866240,
-            &quot;rss_sample_count&quot;: 70,
-            &quot;max_rss_gap_ms&quot;: 6.698832992697135,
-            &quot;max_paired_read_ms&quot;: 0.11329201515763998
+            &quot;producer_cpu_s&quot;: 0.8988259999999999,
+            &quot;consumer_cpu_s&quot;: 0.833774,
+            &quot;baseline_paired_rss_bytes&quot;: 87998464,
+            &quot;peak_paired_rss_bytes&quot;: 90013696,
+            &quot;rss_sample_count&quot;: 51,
+            &quot;max_rss_gap_ms&quot;: 6.3335419981740415,
+            &quot;max_paired_read_ms&quot;: 0.08595801773481071
           },
           &quot;file&quot;: &quot;raw/case-4-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;9c95b3d1cb6698ed87517b03614ceedffe39043d2ebd90c2030ba7d5bdb017ca&quot;
+          &quot;sha256&quot;: &quot;90a5083cb320a3b763b9df357c7db2cf90707c072a9d570b8d23889c6b84b230&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.09126908399048261,
-            &quot;messages_per_s&quot;: 2804.8928378277055,
-            &quot;payload_mib_per_s&quot;: 2804.8928378277055,
+            &quot;duration_s&quot;: 0.06921062499168329,
+            &quot;messages_per_s&quot;: 3698.854042002399,
+            &quot;payload_mib_per_s&quot;: 3698.854042002399,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.228749995585531,
-              &quot;p50&quot;: 0.3602920041885227,
-              &quot;p95&quot;: 0.4010832490166649,
-              &quot;p99&quot;: 0.42065449815709144,
-              &quot;max&quot;: 0.42662498890422285
+              &quot;min&quot;: 0.22766698384657502,
+              &quot;p50&quot;: 0.24185399524867535,
+              &quot;p95&quot;: 0.37943774077575654,
+              &quot;p99&quot;: 0.5231354443822052,
+              &quot;max&quot;: 0.6553330167662352
             },
-            &quot;producer_cpu_s&quot;: 0.565024,
-            &quot;consumer_cpu_s&quot;: 0.5535100000000002,
-            &quot;baseline_paired_rss_bytes&quot;: 87719936,
+            &quot;producer_cpu_s&quot;: 0.19511900000000026,
+            &quot;consumer_cpu_s&quot;: 0.27149000000000023,
+            &quot;baseline_paired_rss_bytes&quot;: 87687168,
             &quot;peak_paired_rss_bytes&quot;: 88047616,
-            &quot;rss_sample_count&quot;: 18,
-            &quot;max_rss_gap_ms&quot;: 6.5159579971805215,
-            &quot;max_paired_read_ms&quot;: 0.03845800529234111
+            &quot;rss_sample_count&quot;: 15,
+            &quot;max_rss_gap_ms&quot;: 6.401291990187019,
+            &quot;max_paired_read_ms&quot;: 0.050417002057656646
           },
           &quot;file&quot;: &quot;raw/case-4-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;b4eb2d7a15c368a94b175de9026f15159e48091659f241b663945c10c4990951&quot;
+          &quot;sha256&quot;: &quot;1dd44fb7da63b17506b89f498d74b0ee251f7ce1b5eaebf63d62fd3412fa495e&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.07831516698934138,
-            &quot;messages_per_s&quot;: 3268.8431863376013,
-            &quot;payload_mib_per_s&quot;: 3268.8431863376013,
+            &quot;duration_s&quot;: 0.06402391698793508,
+            &quot;messages_per_s&quot;: 3998.5057466609182,
+            &quot;payload_mib_per_s&quot;: 3998.5057466609182,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.23170799249783158,
-              &quot;p50&quot;: 0.29031248413957655,
-              &quot;p95&quot;: 0.3870834843837656,
-              &quot;p99&quot;: 0.4738394010928459,
-              &quot;max&quot;: 0.5550000059884042
+              &quot;min&quot;: 0.22783299209550023,
+              &quot;p50&quot;: 0.23489548766519874,
+              &quot;p95&quot;: 0.3548854947439395,
+              &quot;p99&quot;: 0.3862457888317294,
+              &quot;max&quot;: 0.5130830104462802
             },
-            &quot;producer_cpu_s&quot;: 0.49267400000000006,
-            &quot;consumer_cpu_s&quot;: 0.499908,
-            &quot;baseline_paired_rss_bytes&quot;: 87687168,
-            &quot;peak_paired_rss_bytes&quot;: 87998464,
-            &quot;rss_sample_count&quot;: 16,
-            &quot;max_rss_gap_ms&quot;: 6.517917005112395,
-            &quot;max_paired_read_ms&quot;: 0.039332982851192355
+            &quot;producer_cpu_s&quot;: 0.190183,
+            &quot;consumer_cpu_s&quot;: 0.19700600000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 87638016,
+            &quot;peak_paired_rss_bytes&quot;: 87965696,
+            &quot;rss_sample_count&quot;: 14,
+            &quot;max_rss_gap_ms&quot;: 6.296375009696931,
+            &quot;max_paired_read_ms&quot;: 0.04579100641421974
           },
           &quot;file&quot;: &quot;raw/case-4-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;b5c54c3e755b4ce9c6e6c2f72a55c596f17439e5e13bf0c448ed9350d2717635&quot;
+          &quot;sha256&quot;: &quot;604c1884d7942695a2a265dcc29e3f7ee9152da1e91a40148bb2d0a96b0370f2&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.2925038750108797,
-            &quot;messages_per_s&quot;: 875.2020806236432,
-            &quot;payload_mib_per_s&quot;: 875.2020806236432,
+            &quot;duration_s&quot;: 0.2914031669788528,
+            &quot;messages_per_s&quot;: 878.5079539598071,
+            &quot;payload_mib_per_s&quot;: 878.5079539598071,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.8040409884415567,
-              &quot;p50&quot;: 1.042583491653204,
-              &quot;p95&quot;: 1.582073004101403,
-              &quot;p99&quot;: 1.7099626420531417,
-              &quot;max&quot;: 2.7557089924812317
+              &quot;min&quot;: 0.8337079780176282,
+              &quot;p50&quot;: 1.0457710013724864,
+              &quot;p95&quot;: 1.5079374934430234,
+              &quot;p99&quot;: 1.592558991978876,
+              &quot;max&quot;: 1.667250005993992
             },
-            &quot;producer_cpu_s&quot;: 0.5564440000000002,
-            &quot;consumer_cpu_s&quot;: 0.6840120000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 88260608,
-            &quot;peak_paired_rss_bytes&quot;: 89505792,
+            &quot;producer_cpu_s&quot;: 0.744931,
+            &quot;consumer_cpu_s&quot;: 0.7697949999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 89128960,
+            &quot;peak_paired_rss_bytes&quot;: 89915392,
             &quot;rss_sample_count&quot;: 50,
-            &quot;max_rss_gap_ms&quot;: 6.493374996352941,
-            &quot;max_paired_read_ms&quot;: 0.050084025133401155
+            &quot;max_rss_gap_ms&quot;: 6.309084012173116,
+            &quot;max_paired_read_ms&quot;: 0.07966702105477452
           },
           &quot;file&quot;: &quot;raw/case-4-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;4c9d9a75b79e669722ded917fcffa77921d17e525a60a9f12ee7eeb72188eaed&quot;
+          &quot;sha256&quot;: &quot;b0b08191c4bc389848dd7185e6918ad6d1fdde442ea3f2be6354f19cf9c2e929&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.29752941700280644,
-            &quot;messages_per_s&quot;: 860.419122851255,
-            &quot;payload_mib_per_s&quot;: 860.419122851255,
+            &quot;duration_s&quot;: 0.2866126669978257,
+            &quot;messages_per_s&quot;: 893.191507135803,
+            &quot;payload_mib_per_s&quot;: 893.191507135803,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.798833993030712,
-              &quot;p50&quot;: 1.0558334906818345,
-              &quot;p95&quot;: 1.5599270118400455,
-              &quot;p99&quot;: 1.825373242900241,
-              &quot;max&quot;: 1.936875021783635
+              &quot;min&quot;: 0.7238750113174319,
+              &quot;p50&quot;: 1.0812499967869371,
+              &quot;p95&quot;: 1.4678857696708292,
+              &quot;p99&quot;: 1.5490231060539372,
+              &quot;max&quot;: 1.5678750060033053
             },
-            &quot;producer_cpu_s&quot;: 0.686766,
-            &quot;consumer_cpu_s&quot;: 0.6852469999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 87801856,
-            &quot;peak_paired_rss_bytes&quot;: 89899008,
-            &quot;rss_sample_count&quot;: 52,
-            &quot;max_rss_gap_ms&quot;: 6.417792028514668,
-            &quot;max_paired_read_ms&quot;: 0.05050000618211925
+            &quot;producer_cpu_s&quot;: 0.581034,
+            &quot;consumer_cpu_s&quot;: 0.5841279999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 88965120,
+            &quot;peak_paired_rss_bytes&quot;: 89997312,
+            &quot;rss_sample_count&quot;: 50,
+            &quot;max_rss_gap_ms&quot;: 6.361042003845796,
+            &quot;max_paired_read_ms&quot;: 0.04741700831800699
           },
           &quot;file&quot;: &quot;raw/case-4-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;c128643f8ee0209aa3a23715c55c892efe80f0cd449922691b8edf390db6129b&quot;
+          &quot;sha256&quot;: &quot;4db0376e1ec5d03c858bb49dffc98f07f5d16226b6a0cbec25ff30036dca9eec&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.0665940830076579,
-            &quot;messages_per_s&quot;: 3844.185375607043,
-            &quot;payload_mib_per_s&quot;: 3844.185375607043,
+            &quot;duration_s&quot;: 0.06335458401008509,
+            &quot;messages_per_s&quot;: 4040.749442206876,
+            &quot;payload_mib_per_s&quot;: 4040.749442206876,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.2253339916933328,
-              &quot;p50&quot;: 0.24195799778681248,
-              &quot;p95&quot;: 0.34463551128283143,
-              &quot;p99&quot;: 0.375117003568448,
-              &quot;max&quot;: 0.4117499920539558
+              &quot;min&quot;: 0.22504202206619084,
+              &quot;p50&quot;: 0.23295848222915083,
+              &quot;p95&quot;: 0.3121770132565871,
+              &quot;p99&quot;: 0.3428170093684455,
+              &quot;max&quot;: 0.4358329751994461
             },
-            &quot;producer_cpu_s&quot;: 0.15867500000000012,
-            &quot;consumer_cpu_s&quot;: 0.16342200000000018,
-            &quot;baseline_paired_rss_bytes&quot;: 87769088,
+            &quot;producer_cpu_s&quot;: 0.19305000000000017,
+            &quot;consumer_cpu_s&quot;: 0.1593659999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 87719936,
             &quot;peak_paired_rss_bytes&quot;: 87916544,
             &quot;rss_sample_count&quot;: 14,
-            &quot;max_rss_gap_ms&quot;: 6.570083001861349,
-            &quot;max_paired_read_ms&quot;: 0.09604200022295117
+            &quot;max_rss_gap_ms&quot;: 6.27954100491479,
+            &quot;max_paired_read_ms&quot;: 0.039417005609720945
           },
           &quot;file&quot;: &quot;raw/case-4-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;a5c80bc08fd8f2c24f9a3aa607cfcf58018388f9335060bcf766dd7c39204ae1&quot;
+          &quot;sha256&quot;: &quot;e9ed0f2e7362382b97fdabc0c42e2d026de38b3364bf170293c97e8563520a73&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.08183637500042096,
-            &quot;messages_per_s&quot;: 3128.1933003347613,
-            &quot;payload_mib_per_s&quot;: 3128.1933003347613,
+            &quot;duration_s&quot;: 0.08135195900104009,
+            &quot;messages_per_s&quot;: 3146.8203488096337,
+            &quot;payload_mib_per_s&quot;: 3146.8203488096337,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.22612500470131636,
-              &quot;p50&quot;: 0.2860624954337254,
-              &quot;p95&quot;: 0.48081249406095594,
-              &quot;p99&quot;: 0.5826000022352672,
-              &quot;max&quot;: 0.8155829855240881
+              &quot;min&quot;: 0.22625000565312803,
+              &quot;p50&quot;: 0.3160834894515574,
+              &quot;p95&quot;: 0.42754200694616884,
+              &quot;p99&quot;: 0.5348373553715645,
+              &quot;max&quot;: 0.6594169826712459
             },
-            &quot;producer_cpu_s&quot;: 0.47599499999999995,
-            &quot;consumer_cpu_s&quot;: 0.399278,
-            &quot;baseline_paired_rss_bytes&quot;: 87769088,
-            &quot;peak_paired_rss_bytes&quot;: 88178688,
+            &quot;producer_cpu_s&quot;: 0.4372959999999999,
+            &quot;consumer_cpu_s&quot;: 0.49419900000000005,
+            &quot;baseline_paired_rss_bytes&quot;: 87654400,
+            &quot;peak_paired_rss_bytes&quot;: 87982080,
             &quot;rss_sample_count&quot;: 17,
-            &quot;max_rss_gap_ms&quot;: 6.551083002705127,
-            &quot;max_paired_read_ms&quot;: 0.048833986511453986
+            &quot;max_rss_gap_ms&quot;: 6.455333001213148,
+            &quot;max_paired_read_ms&quot;: 0.06945800851099193
           },
           &quot;file&quot;: &quot;raw/case-4-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;3d21ff16f94f1bb03b94f9c149869ed7f14bc1f912a37c2ae4e5bb707a338616&quot;
+          &quot;sha256&quot;: &quot;0103a4e42f26197ffff4bf0f9e92c0c07602ae97e1d0b7eafa471cdc66a617bd&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 1048576,
           &quot;count&quot;: 256,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 256,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.30290787501144223,
-            &quot;messages_per_s&quot;: 845.1414476772177,
-            &quot;payload_mib_per_s&quot;: 845.1414476772177,
+            &quot;duration_s&quot;: 0.31178987500607036,
+            &quot;messages_per_s&quot;: 821.0657898849853,
+            &quot;payload_mib_per_s&quot;: 821.0657898849853,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.9053749963641167,
-              &quot;p50&quot;: 1.0935205064015463,
-              &quot;p95&quot;: 1.5446247562067583,
-              &quot;p99&quot;: 1.6842854514834469,
-              &quot;max&quot;: 1.7764999938663095
+              &quot;min&quot;: 0.8840829832479358,
+              &quot;p50&quot;: 1.1295830045128241,
+              &quot;p95&quot;: 1.8550309832789935,
+              &quot;p99&quot;: 2.317020802001934,
+              &quot;max&quot;: 3.035333997104317
             },
-            &quot;producer_cpu_s&quot;: 0.6479119999999998,
-            &quot;consumer_cpu_s&quot;: 0.6778440000000001,
-            &quot;baseline_paired_rss_bytes&quot;: 89145344,
-            &quot;peak_paired_rss_bytes&quot;: 90079232,
-            &quot;rss_sample_count&quot;: 52,
-            &quot;max_rss_gap_ms&quot;: 6.515250017400831,
-            &quot;max_paired_read_ms&quot;: 0.05512498319149017
+            &quot;producer_cpu_s&quot;: 0.6759839999999999,
+            &quot;consumer_cpu_s&quot;: 0.7561470000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 88539136,
+            &quot;peak_paired_rss_bytes&quot;: 89882624,
+            &quot;rss_sample_count&quot;: 54,
+            &quot;max_rss_gap_ms&quot;: 6.328624993329868,
+            &quot;max_paired_read_ms&quot;: 0.05408399738371372
           },
           &quot;file&quot;: &quot;raw/case-4-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;eef3d6e6af159d52af90249f94216217ff19efabfd0c7a0b76460ca0a12fd3cd&quot;
+          &quot;sha256&quot;: &quot;15666334dfca9eaa116fc91cf78c2da82360314589d5a52b18e564d0289ed99a&quot;
         }
       ]
     },
@@ -1338,235 +1466,243 @@
       &quot;runs&quot;: [
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.312480583001161,
-            &quot;messages_per_s&quot;: 204.8127259150762,
-            &quot;payload_mib_per_s&quot;: 819.2509036603047,
+            &quot;duration_s&quot;: 0.31041637499583885,
+            &quot;messages_per_s&quot;: 206.17469036824465,
+            &quot;payload_mib_per_s&quot;: 824.6987614729786,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 3.8062500243540853,
-              &quot;p50&quot;: 4.636916506569833,
-              &quot;p95&quot;: 6.284831243101507,
-              &quot;p99&quot;: 6.404901043570134,
-              &quot;max&quot;: 6.5597500069998205
+              &quot;min&quot;: 3.798499994445592,
+              &quot;p50&quot;: 4.6596875035902485,
+              &quot;p95&quot;: 6.108365212276112,
+              &quot;p99&quot;: 6.331876122858374,
+              &quot;max&quot;: 6.448583008022979
             },
-            &quot;producer_cpu_s&quot;: 0.4216960000000003,
-            &quot;consumer_cpu_s&quot;: 0.48161999999999994,
-            &quot;baseline_paired_rss_bytes&quot;: 142147584,
-            &quot;peak_paired_rss_bytes&quot;: 375570432,
-            &quot;rss_sample_count&quot;: 54,
-            &quot;max_rss_gap_ms&quot;: 6.482791999587789,
-            &quot;max_paired_read_ms&quot;: 0.04795799031853676
+            &quot;producer_cpu_s&quot;: 0.4341569999999999,
+            &quot;consumer_cpu_s&quot;: 0.49299899999999997,
+            &quot;baseline_paired_rss_bytes&quot;: 140771328,
+            &quot;peak_paired_rss_bytes&quot;: 375504896,
+            &quot;rss_sample_count&quot;: 53,
+            &quot;max_rss_gap_ms&quot;: 6.378958001732826,
+            &quot;max_paired_read_ms&quot;: 0.09491699165664613
           },
           &quot;file&quot;: &quot;raw/case-5-trial-0-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;d059a97ac68de336496dfa87c7987372a8d434a67191f32692f40ac2cdf2cc7b&quot;
+          &quot;sha256&quot;: &quot;12fe0f44605f257c46d112e11ee12d395f127dad5559c3dbc1673d87271e6c90&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 0,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.06367933301953599,
-            &quot;messages_per_s&quot;: 1005.0356523107055,
-            &quot;payload_mib_per_s&quot;: 4020.142609242822,
+            &quot;duration_s&quot;: 0.09968554100487381,
+            &quot;messages_per_s&quot;: 642.0188861378695,
+            &quot;payload_mib_per_s&quot;: 2568.075544551478,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.8978340192697942,
-              &quot;p50&quot;: 0.960666497121565,
-              &quot;p95&quot;: 1.1320589037495665,
-              &quot;p99&quot;: 1.258633755496703,
-              &quot;max&quot;: 1.2673750170506537
+              &quot;min&quot;: 0.8669169910717756,
+              &quot;p50&quot;: 1.12200049625244,
+              &quot;p95&quot;: 1.5647838561562808,
+              &quot;p99&quot;: 13.972426041145807,
+              &quot;max&quot;: 14.431249990593642
             },
-            &quot;producer_cpu_s&quot;: 0.15416000000000007,
-            &quot;consumer_cpu_s&quot;: 0.16304300000000005,
-            &quot;baseline_paired_rss_bytes&quot;: 109133824,
-            &quot;peak_paired_rss_bytes&quot;: 109150208,
-            &quot;rss_sample_count&quot;: 14,
-            &quot;max_rss_gap_ms&quot;: 6.490875006420538,
-            &quot;max_paired_read_ms&quot;: 0.06895800470374525
+            &quot;producer_cpu_s&quot;: 0.656393,
+            &quot;consumer_cpu_s&quot;: 0.7530220000000001,
+            &quot;baseline_paired_rss_bytes&quot;: 107511808,
+            &quot;peak_paired_rss_bytes&quot;: 109117440,
+            &quot;rss_sample_count&quot;: 20,
+            &quot;max_rss_gap_ms&quot;: 6.436291005229577,
+            &quot;max_paired_read_ms&quot;: 0.08145798346959054
           },
           &quot;file&quot;: &quot;raw/case-5-trial-0-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;5518fb71f9f52736b317dc39870ab133a8154cb3a08ed2743a74d4934da4cd09&quot;
+          &quot;sha256&quot;: &quot;5495d6a2fe8aab107e48bd959800e5e7c829fd98ca01aeaeb89de112c6f79f41&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.058795791992451996,
-            &quot;messages_per_s&quot;: 1088.5132733345288,
-            &quot;payload_mib_per_s&quot;: 4354.053093338115,
+            &quot;duration_s&quot;: 0.07022562500787899,
+            &quot;messages_per_s&quot;: 911.3482435054084,
+            &quot;payload_mib_per_s&quot;: 3645.3929740216336,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.8736249874345958,
-              &quot;p50&quot;: 0.9032294910866767,
-              &quot;p95&quot;: 1.022595535323489,
-              &quot;p99&quot;: 1.143623253738042,
-              &quot;max&quot;: 1.162917003966868
+              &quot;min&quot;: 0.8699170139152557,
+              &quot;p50&quot;: 1.0929379932349548,
+              &quot;p95&quot;: 1.3417394002317449,
+              &quot;p99&quot;: 1.4951924968045196,
+              &quot;max&quot;: 1.7111249908339232
             },
-            &quot;producer_cpu_s&quot;: 0.144401,
-            &quot;consumer_cpu_s&quot;: 0.14482700000000004,
-            &quot;baseline_paired_rss_bytes&quot;: 107479040,
-            &quot;peak_paired_rss_bytes&quot;: 109084672,
-            &quot;rss_sample_count&quot;: 13,
-            &quot;max_rss_gap_ms&quot;: 6.4338330121245235,
-            &quot;max_paired_read_ms&quot;: 0.03404100425541401
+            &quot;producer_cpu_s&quot;: 0.3128120000000001,
+            &quot;consumer_cpu_s&quot;: 0.4757589999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 108904448,
+            &quot;peak_paired_rss_bytes&quot;: 108953600,
+            &quot;rss_sample_count&quot;: 15,
+            &quot;max_rss_gap_ms&quot;: 6.42983298166655,
+            &quot;max_paired_read_ms&quot;: 0.05904198042117059
           },
           &quot;file&quot;: &quot;raw/case-5-trial-1-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;71e3cc5f19e552c1fcc31ea181313c1a3bd54c1100fb58277c2670f14b60bacf&quot;
+          &quot;sha256&quot;: &quot;de7c3ad5538fffd18a4d2511d922cf1a82a260145cf7ad6168c8c837a612d474&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 1,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.30095295899081975,
-            &quot;messages_per_s&quot;: 212.65781939679235,
-            &quot;payload_mib_per_s&quot;: 850.6312775871694,
+            &quot;duration_s&quot;: 0.3000259159889538,
+            &quot;messages_per_s&quot;: 213.31490577752731,
+            &quot;payload_mib_per_s&quot;: 853.2596231101093,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 3.750832984223962,
-              &quot;p50&quot;: 4.205479010124691,
-              &quot;p95&quot;: 6.162846364895813,
-              &quot;p99&quot;: 6.481309887894894,
-              &quot;max&quot;: 6.679208017885685
+              &quot;min&quot;: 3.7337910034693778,
+              &quot;p50&quot;: 4.275917002814822,
+              &quot;p95&quot;: 6.084531235683243,
+              &quot;p99&quot;: 6.455876256222837,
+              &quot;max&quot;: 6.469500018283725
             },
-            &quot;producer_cpu_s&quot;: 0.6698510000000002,
-            &quot;consumer_cpu_s&quot;: 0.6565289999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 141524992,
-            &quot;peak_paired_rss_bytes&quot;: 375701504,
-            &quot;rss_sample_count&quot;: 53,
-            &quot;max_rss_gap_ms&quot;: 6.456749979406595,
-            &quot;max_paired_read_ms&quot;: 0.053791009122505784
+            &quot;producer_cpu_s&quot;: 0.47925299999999993,
+            &quot;consumer_cpu_s&quot;: 0.47863100000000003,
+            &quot;baseline_paired_rss_bytes&quot;: 142016512,
+            &quot;peak_paired_rss_bytes&quot;: 375504896,
+            &quot;rss_sample_count&quot;: 52,
+            &quot;max_rss_gap_ms&quot;: 6.406167027307674,
+            &quot;max_paired_read_ms&quot;: 0.11187500786036253
           },
           &quot;file&quot;: &quot;raw/case-5-trial-1-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;7936000445c74fef5d99d8883257f1952eca2c1313beb8c92bbf42c1cec684d0&quot;
+          &quot;sha256&quot;: &quot;a3b8e9d3aafc205b7498f2fd52d5a0ffdab5712782ef2914fc865a64136752d6&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.3091625410015695,
-            &quot;messages_per_s&quot;: 207.01084870328808,
-            &quot;payload_mib_per_s&quot;: 828.0433948131523,
+            &quot;duration_s&quot;: 0.3044216249836609,
+            &quot;messages_per_s&quot;: 210.23473612768163,
+            &quot;payload_mib_per_s&quot;: 840.9389445107265,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 3.754583012778312,
-              &quot;p50&quot;: 4.285021001123823,
-              &quot;p95&quot;: 6.395262460864615,
-              &quot;p99&quot;: 6.547341953846626,
-              &quot;max&quot;: 6.608583003981039
+              &quot;min&quot;: 3.649166988907382,
+              &quot;p50&quot;: 3.996875006123446,
+              &quot;p95&quot;: 6.2398749971180205,
+              &quot;p99&quot;: 11.636643570964189,
+              &quot;max&quot;: 20.068458979949355
             },
-            &quot;producer_cpu_s&quot;: 0.626028,
-            &quot;consumer_cpu_s&quot;: 0.6765260000000002,
-            &quot;baseline_paired_rss_bytes&quot;: 140902400,
-            &quot;peak_paired_rss_bytes&quot;: 375652352,
-            &quot;rss_sample_count&quot;: 53,
-            &quot;max_rss_gap_ms&quot;: 6.434750015614554,
-            &quot;max_paired_read_ms&quot;: 0.05670799873769283
+            &quot;producer_cpu_s&quot;: 0.8285290000000001,
+            &quot;consumer_cpu_s&quot;: 0.8297979999999998,
+            &quot;baseline_paired_rss_bytes&quot;: 139264000,
+            &quot;peak_paired_rss_bytes&quot;: 375930880,
+            &quot;rss_sample_count&quot;: 52,
+            &quot;max_rss_gap_ms&quot;: 6.331458018394187,
+            &quot;max_paired_read_ms&quot;: 0.059666024753823876
           },
           &quot;file&quot;: &quot;raw/case-5-trial-2-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;81f1aad875d51113fe3bc9fdd09517713e5e651684c13c8aa5303100ec6dbd26&quot;
+          &quot;sha256&quot;: &quot;a6816e031967de483681effa15c3a07854731f634ca24747c897bbec2dd2874c&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 2,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.1528387919825036,
-            &quot;messages_per_s&quot;: 418.74185977161136,
-            &quot;payload_mib_per_s&quot;: 1674.9674390864454,
+            &quot;duration_s&quot;: 0.06916566600557417,
+            &quot;messages_per_s&quot;: 925.3145917056903,
+            &quot;payload_mib_per_s&quot;: 3701.258366822761,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.8999580168165267,
-              &quot;p50&quot;: 1.043333497364074,
-              &quot;p95&quot;: 4.514267055492378,
-              &quot;p99&quot;: 29.65005951351481,
-              &quot;max&quot;: 42.37779200775549
+              &quot;min&quot;: 0.8723750070203096,
+              &quot;p50&quot;: 1.102041991543956,
+              &quot;p95&quot;: 1.2518973468104377,
+              &quot;p99&quot;: 1.4407927074353202,
+              &quot;max&quot;: 1.6336249827872962
             },
-            &quot;producer_cpu_s&quot;: 0.635861,
-            &quot;consumer_cpu_s&quot;: 0.664134,
-            &quot;baseline_paired_rss_bytes&quot;: 108527616,
-            &quot;peak_paired_rss_bytes&quot;: 109510656,
-            &quot;rss_sample_count&quot;: 28,
-            &quot;max_rss_gap_ms&quot;: 6.473332992754877,
-            &quot;max_paired_read_ms&quot;: 0.046083005145192146
+            &quot;producer_cpu_s&quot;: 0.37010300000000007,
+            &quot;consumer_cpu_s&quot;: 0.4446850000000002,
+            &quot;baseline_paired_rss_bytes&quot;: 108003328,
+            &quot;peak_paired_rss_bytes&quot;: 109002752,
+            &quot;rss_sample_count&quot;: 15,
+            &quot;max_rss_gap_ms&quot;: 6.448125001043081,
+            &quot;max_paired_read_ms&quot;: 0.04904199158772826
           },
           &quot;file&quot;: &quot;raw/case-5-trial-2-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;21570b0d4c5c2eaf42a17afb42804cce7d1d51d9aacde0eabad1d4fb2d786065&quot;
+          &quot;sha256&quot;: &quot;05e3a2857861927b61626da620abcbf0b1d98c47ed76ae99f4368d67d544b75e&quot;
         },
         {
           &quot;mode&quot;: &quot;shared&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.07381504200748168,
-            &quot;messages_per_s&quot;: 867.0319525593868,
-            &quot;payload_mib_per_s&quot;: 3468.1278102375472,
+            &quot;duration_s&quot;: 0.05801487501594238,
+            &quot;messages_per_s&quot;: 1103.1653516863205,
+            &quot;payload_mib_per_s&quot;: 4412.661406745282,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 0.9290419984608889,
-              &quot;p50&quot;: 1.1418329959269613,
-              &quot;p95&quot;: 1.2526688340585679,
-              &quot;p99&quot;: 1.526459050655829,
-              &quot;max&quot;: 1.9128330168314278
+              &quot;min&quot;: 0.8614160178694874,
+              &quot;p50&quot;: 0.8898959931684658,
+              &quot;p95&quot;: 0.9507901297183706,
+              &quot;p99&quot;: 1.2377640834893082,
+              &quot;max&quot;: 1.6599170048721135
             },
-            &quot;producer_cpu_s&quot;: 0.46136200000000005,
-            &quot;consumer_cpu_s&quot;: 0.4584619999999999,
-            &quot;baseline_paired_rss_bytes&quot;: 108085248,
-            &quot;peak_paired_rss_bytes&quot;: 109051904,
-            &quot;rss_sample_count&quot;: 16,
-            &quot;max_rss_gap_ms&quot;: 6.453125010011718,
-            &quot;max_paired_read_ms&quot;: 0.048792018787935376
+            &quot;producer_cpu_s&quot;: 0.1410809999999998,
+            &quot;consumer_cpu_s&quot;: 0.1446719999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 108232704,
+            &quot;peak_paired_rss_bytes&quot;: 108281856,
+            &quot;rss_sample_count&quot;: 13,
+            &quot;max_rss_gap_ms&quot;: 6.283791008172557,
+            &quot;max_paired_read_ms&quot;: 0.038707978092134
           },
           &quot;file&quot;: &quot;raw/case-5-trial-3-shared.json.gz&quot;,
-          &quot;sha256&quot;: &quot;3d93d7f582adcf9dae25f98185451e5b98e87c1b01d8f123e42f9dae408efa49&quot;
+          &quot;sha256&quot;: &quot;50c15728760f7777c0a5fcca12f9a73205aeb930818f399246d13143c683bd36&quot;
         },
         {
           &quot;mode&quot;: &quot;pipe&quot;,
+          &quot;pipe_receive&quot;: &quot;into&quot;,
           &quot;trial&quot;: 3,
           &quot;payload_bytes&quot;: 4194304,
           &quot;count&quot;: 64,
           &quot;summary&quot;: {
             &quot;verified_messages&quot;: 64,
             &quot;verified_payload_bytes&quot;: 268435456,
-            &quot;duration_s&quot;: 0.43566758299130015,
-            &quot;messages_per_s&quot;: 146.90099171614983,
-            &quot;payload_mib_per_s&quot;: 587.6039668645993,
+            &quot;duration_s&quot;: 0.30124633299419656,
+            &quot;messages_per_s&quot;: 212.45071886479343,
+            &quot;payload_mib_per_s&quot;: 849.8028754591737,
             &quot;round_trip_ms&quot;: {
-              &quot;min&quot;: 4.122583020944148,
-              &quot;p50&quot;: 6.209437997313216,
-              &quot;p95&quot;: 9.97404995432589,
-              &quot;p99&quot;: 12.76821265899343,
-              &quot;max&quot;: 13.471790996845812
+              &quot;min&quot;: 3.5873329907190055,
+              &quot;p50&quot;: 3.9824374980526045,
+              &quot;p95&quot;: 6.468220509123055,
+              &quot;p99&quot;: 7.19585825339891,
+              &quot;max&quot;: 7.287916989298537
             },
-            &quot;producer_cpu_s&quot;: 0.631284,
-            &quot;consumer_cpu_s&quot;: 0.6888109999999998,
-            &quot;baseline_paired_rss_bytes&quot;: 140181504,
-            &quot;peak_paired_rss_bytes&quot;: 375537664,
-            &quot;rss_sample_count&quot;: 72,
-            &quot;max_rss_gap_ms&quot;: 9.57254201057367,
-            &quot;max_paired_read_ms&quot;: 0.32699998700991273
+            &quot;producer_cpu_s&quot;: 0.49461299999999975,
+            &quot;consumer_cpu_s&quot;: 0.6389929999999999,
+            &quot;baseline_paired_rss_bytes&quot;: 138575872,
+            &quot;peak_paired_rss_bytes&quot;: 375767040,
+            &quot;rss_sample_count&quot;: 52,
+            &quot;max_rss_gap_ms&quot;: 6.339292012853548,
+            &quot;max_paired_read_ms&quot;: 0.04820802132599056
           },
           &quot;file&quot;: &quot;raw/case-5-trial-3-pipe.json.gz&quot;,
-          &quot;sha256&quot;: &quot;fce9377f21f85d53af44c8ad48dc5bf6c8d7453dfbbd15746232c48fc7e7b71a&quot;
+          &quot;sha256&quot;: &quot;63a16575a132541d38e0f99e0cc819b2b7b1c78b2c226b2b288d4f5bb155e68f&quot;
         }
       ]
     }

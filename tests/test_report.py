@@ -9,12 +9,25 @@ from unittest.mock import patch
 
 from tiny_ipc_lab.cli import benchmark
 from tiny_ipc_lab.experiment import TrialFailure
-from tiny_ipc_lab.report import summarize, verify, render, overview, resolve
+from tiny_ipc_lab.report import summarize, verify, render, overview, resolve, comparisons
 
 
 class MetricsTests(unittest.TestCase):
+    def test_paired_ratio_is_not_a_ratio_of_independent_medians(self):
+        report = {"pairs": 2, "cases": [{"payload_bytes": 64, "runs": [
+            {"trial": 0, "mode": "pipe", "summary": {"payload_mib_per_s": 1.}},
+            {"trial": 0, "mode": "shared", "summary": {"payload_mib_per_s": 10.}},
+            {"trial": 1, "mode": "pipe", "summary": {"payload_mib_per_s": 100.}},
+            {"trial": 1, "mode": "shared", "summary": {"payload_mib_per_s": 200.}}]}]}
+        result = comparisons(report)[0]
+        self.assertEqual(result["ratios"], [10., 2.])
+        self.assertEqual(result["median"], 6.)
+        self.assertNotAlmostEqual(result["median"], 105 / 50.5)
+        report["cases"][0]["runs"].pop()
+        with self.assertRaises(ValueError):
+            comparisons(report)
     def fixture(self):
-        return {"mode": "shared", "payload_bytes": 4, "count": 2, "warmup": 8,
+        return {"mode": "shared", "pipe_receive": "into", "payload_bytes": 4, "count": 2, "warmup": 8,
                 "producer": {"event": "done", "start_s": 1., "end_s": 1.006, "cpu_s": .001,
                              "high_water_rss_bytes": 100,
                              "records": [{"sequence": 8, "start_s": 1., "end_s": 1.002, "input_crc32": 1, "ack_crc32": 1},
@@ -26,7 +39,7 @@ class MetricsTests(unittest.TestCase):
                 "rss_samples": [{"start_s": .991, "end_s": .992, "producer_rss_bytes": 100, "consumer_rss_bytes": 10},
                                 {"start_s": 1.008, "end_s": 1.009, "producer_rss_bytes": 10, "consumer_rss_bytes": 100}],
                 "cleanup": {"exitcodes": [0, 0], "forced_termination": False,
-                            "all_workers_exited": True, "segment_unlinked": True}}
+                            "all_workers_exited": True, "control_readers_exited": True, "segment_unlinked": True}}
 
     def test_hand_calculated_duration_latency_and_simultaneous_rss(self):
         result = summarize(self.fixture(), check_values=False)
@@ -80,7 +93,9 @@ class EvidenceTests(unittest.TestCase):
                   lambda r: r["cases"][0]["runs"][0]["summary"].update(payload_mib_per_s=1e9),
                   lambda r: r["cases"][0]["runs"][0].update(count=8),
                   lambda r: r.update(source_sha256="0"*64),
-                  lambda r: r["cases"][0]["runs"][0].update(file="../../README.md")]
+                  lambda r: r["cases"][0]["runs"][0].update(file="../../README.md"),
+                  lambda r: r.update(pipe_receive="bytes"),
+                  lambda r: r["comparisons"][0].update(median=4.10)]
         for fault in faults:
             changed = copy.deepcopy(self.report)
             fault(changed)

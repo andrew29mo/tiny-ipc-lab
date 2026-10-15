@@ -1,7 +1,12 @@
 import copy
+from functools import partial
 from contextlib import contextmanager
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
+import os
+from pathlib import Path
+import struct
+import tempfile
 import threading
 import time
 import unittest
@@ -11,16 +16,16 @@ import numpy as np
 import psutil
 
 from tiny_ipc_lab import experiment
-from tiny_ipc_lab.experiment import run_trial, TrialFailure
+from tiny_ipc_lab.experiment import run_trial, TrialFailure, consumer as real_consumer
 from tiny_ipc_lab.protocol import Sender, Receiver, HEADER, ACK, ProtocolError, arrays, fill, crc
 from tiny_ipc_lab.report import summarize
 
 
 @contextmanager
-def transport(mode, size=64):
+def transport(mode, size=64, pipe_receive="into"):
     left, right = mp.get_context("spawn").Pipe()
     block = SharedMemory(create=True, size=size) if mode == "shared" else None
-    sender, receiver = Sender(left, mode, size, block), Receiver(right, mode, size, block)
+    sender, receiver = Sender(left, mode, size, block), Receiver(right, mode, size, block, pipe_receive)
     try:
         yield left, right, block, sender, receiver
     finally:
@@ -33,6 +38,25 @@ def transport(mode, size=64):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_bytes_receive_api_checks_complete_tensor_and_short_payload(self):
+        for corrupt in (False, True):
+            with transport("pipe", pipe_receive="bytes") as (left, _, _, _, receiver):
+                frame = np.arange(16, dtype=np.float32)
+                if corrupt:
+                    frame[8] = -1
+                left.send_bytes(HEADER.pack(0, 64))
+                left.send_bytes(frame)
+                if corrupt:
+                    with self.assertRaises(ProtocolError):
+                        receiver.receive(0)
+                else:
+                    self.assertEqual(receiver.receive(0), crc(frame))
+        with transport("pipe", pipe_receive="bytes") as (left, _, _, _, receiver):
+            left.send_bytes(HEADER.pack(0, 64))
+            left.send_bytes(b"short")
+            with self.assertRaises(ProtocolError):
+                receiver.receive(0)
+
     def test_ack_is_required_before_buffer_reuse_and_every_generation_changes(self):
         for mode in ("pipe", "shared"):
             with self.subTest(mode=mode), transport(mode) as (_, right, _, sender, receiver):
@@ -74,18 +98,18 @@ class ProtocolTests(unittest.TestCase):
 
     def test_receiver_checks_middle_values_and_stale_shared_generation(self):
         for mode in ("pipe", "shared"):
-            with self.subTest(mode=mode), transport(mode) as (left, _, block, _, receiver):
+            with self.subTest(mode=mode), transport(mode) as (left, _, block, sender, receiver):
                 frame = np.arange(16, dtype=np.float32)
                 frame[8] = -999  # First/last elements still match; CRC is not the oracle.
                 if mode == "shared":
-                    np.copyto(receiver.view, frame)
+                    np.copyto(sender.view, frame)
                 left.send_bytes(HEADER.pack(0, 64))
                 if mode == "pipe":
                     left.send_bytes(frame)
                 with self.assertRaises(ProtocolError):
                     receiver.receive(0)
-        with transport("shared") as (left, _, _, _, receiver):
-            receiver.view[:] = np.arange(16, dtype=np.float32)
+        with transport("shared") as (left, _, _, sender, receiver):
+            sender.view[:] = np.arange(16, dtype=np.float32)
             left.send_bytes(HEADER.pack(1, 64))  # Header advanced, payload did not.
             with self.assertRaises(ProtocolError):
                 receiver.receive(1)
@@ -106,8 +130,81 @@ class ProtocolTests(unittest.TestCase):
             with self.assertRaises(ProtocolError):
                 receiver.receive(0)
 
+    def test_shared_consumer_view_is_read_only_while_owner_can_write(self):
+        with transport("shared") as (_, _, _, sender, receiver):
+            self.assertFalse(receiver.view.flags.writeable)
+            self.assertTrue(sender.view.flags.writeable)
+            with self.assertRaises(ValueError):
+                receiver.view[0] = -1
+
+
+class PartialControl:
+    def __init__(self, connection, marker):
+        self.connection = connection
+        self.marker = marker
+
+    def send(self, value):
+        if value.get("event") == "done":
+            # A real partial framed result, after the real consumer verified its data.
+            Path(self.marker).write_text("partial_result_started")
+            os.write(self.connection.fileno(), struct.pack("!i", 1048576) + b"partial")
+            time.sleep(60)
+        else:
+            self.connection.send(value)
+
+    def recv(self):
+        return self.connection.recv()
+
+    def close(self):
+        self.connection.close()
+
+
+def partial_consumer(data, control, *args, marker):
+    real_consumer(data, PartialControl(control, marker), *args)
+
 
 class ProcessTests(unittest.TestCase):
+    def test_partial_control_result_cannot_block_supervisor_deadline(self):
+        before = time.monotonic()
+        with tempfile.TemporaryDirectory() as temp:
+            marker = Path(temp) / "partial-started"
+            with patch.object(experiment, "consumer", partial(partial_consumer, marker=str(marker))):
+                with self.assertRaises(TrialFailure) as caught:
+                    run_trial("shared", 4096, 3, timeout=3)
+            self.assertEqual(marker.read_text(), "partial_result_started")
+        self.assertIn("TimeoutError", str(caught.exception))
+        self.assertLess(time.monotonic() - before, 9)
+        self.assertTrue(caught.exception.cleanup["all_workers_exited"])
+        self.assertTrue(caught.exception.cleanup["control_readers_exited"])
+        self.assertTrue(caught.exception.cleanup["segment_unlinked"])
+
+    def test_parent_descriptors_do_not_accumulate_over_repeated_trials(self):
+        run_trial("shared", 64, 1)  # Establish the persistent standard-library resource tracker.
+        before = psutil.Process().num_fds()
+        for _ in range(4):
+            run_trial("shared", 64, 3)
+        self.assertLessEqual(psutil.Process().num_fds(), before + 1)
+
+    def test_allocation_failure_after_shared_create_still_unlinks(self):
+        names = []
+        def tracked(*args, **kwargs):
+            block = SharedMemory(*args, **kwargs)
+            if kwargs.get("create"):
+                names.append(block.name)
+            return block
+        with patch.object(experiment, "SharedMemory", side_effect=tracked), patch.object(mp.get_context("spawn"), "Pipe", side_effect=OSError("injected pipe allocation failure")):
+            with self.assertRaises(TrialFailure) as caught:
+                run_trial("shared", 64, 1)
+        self.assertTrue(caught.exception.cleanup["segment_unlinked"])
+        self.assertEqual(len(names), 1)
+        with self.assertRaises(FileNotFoundError):
+            SharedMemory(name=names[0])
+
+    def test_public_bytes_api_actual_large_transfers_and_reuse(self):
+        for mode in ("pipe", "shared"):
+            run = run_trial(mode, 4194304, 3, pipe_receive="bytes")
+            self.assertEqual(summarize(run)["verified_messages"], 3)
+
     def test_actual_spawn_workers_check_all_rows_and_cleanup_after_reuse(self):
         names = []
         def tracked(*args, **kwargs):

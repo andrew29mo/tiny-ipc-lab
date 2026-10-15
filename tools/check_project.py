@@ -38,7 +38,7 @@ def publication():
             raise ValueError("Private or linked file: " + name)
         data = path.read_bytes()
         if name.endswith(".gz"):
-            if not re.fullmatch(r"results/macos-arm64/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)\.json\.gz", name):
+            if not re.fullmatch(r"results/macos-arm64(?:-pipe-bytes)?/raw/case-[0-9]+-trial-[0-9]+-(?:pipe|shared)\.json\.gz", name):
                 raise ValueError("Unexpected compressed file")
             data = gzip.decompress(data)
         if b"\0" in data or private.search(data) or secret.search(data):

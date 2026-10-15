@@ -12,14 +12,14 @@ import psutil
 
 from .experiment import fingerprint, run_trial, source_hash, TrialFailure
 from .protocol import RECIPE, WARMUP, check_config
-from .report import SCOPE, default_count, summarize, write_report
+from .report import SCOPE, default_count, summarize, write_report, comparisons
 
 DEFAULT_SIZES = [64, 1024, 16384, 262144, 1048576, 4194304]
 
 
-def benchmark(directory, sizes=DEFAULT_SIZES, pairs=4, count=None):
+def benchmark(directory, sizes=DEFAULT_SIZES, pairs=4, count=None, pipe_receive="into"):
     directory = Path(directory)
-    if not sizes or sizes != sorted(set(sizes)) or type(pairs) is not int or not 1 <= pairs <= 8:
+    if pipe_receive not in ("into", "bytes") or not sizes or sizes != sorted(set(sizes)) or type(pairs) is not int or not 1 <= pairs <= 8:
         raise ValueError("Use sorted unique sizes and 1..8 pairs")
     for size in sizes:
         check_config("pipe", size, default_count(size) if count is None else count)
@@ -27,7 +27,7 @@ def benchmark(directory, sizes=DEFAULT_SIZES, pairs=4, count=None):
         raise ValueError("Use a new output directory; existing measurements are never overwritten")
     (directory / "raw").mkdir(parents=True)
     cpu = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip() if sys.platform == "darwin" else None
-    report = {"schema_version": 1, "generated_utc": datetime.now(timezone.utc).isoformat(),
+    report = {"schema_version": 2, "pipe_receive": pipe_receive, "generated_utc": datetime.now(timezone.utc).isoformat(),
               "source_sha256": source_hash(), "recipe": RECIPE, "scope": SCOPE,
               "pairs": pairs, "count_override": count, "execution_order": [], "cases": [],
               "host": {"os": platform.system(), "os_release": platform.release(), "machine": platform.machine(),
@@ -42,7 +42,7 @@ def benchmark(directory, sizes=DEFAULT_SIZES, pairs=4, count=None):
                 print(f"Measuring {size} bytes, {messages} messages, pair {trial+1}, {mode}", flush=True)
                 (directory / "partial.json").write_text(json.dumps(report, separators=(",", ":"), allow_nan=False) + "\n")
                 try:
-                    run = run_trial(mode, size, messages)
+                    run = run_trial(mode, size, messages, pipe_receive=pipe_receive)
                 except TrialFailure as error:
                     (directory / "failure.json").write_text(json.dumps({"mode": mode, "trial": trial,
                         "payload_bytes": size, "error_type": type(error).__name__, "cleanup": error.cleanup}, indent=2) + "\n")
@@ -52,10 +52,11 @@ def benchmark(directory, sizes=DEFAULT_SIZES, pairs=4, count=None):
                 filename = f"raw/case-{index}-trial-{trial}-{mode}.json.gz"
                 data = gzip.compress(json.dumps(run, separators=(",", ":"), allow_nan=False).encode(), mtime=0)
                 (directory / filename).write_bytes(data)
-                case["runs"].append({"mode": mode, "trial": trial, "payload_bytes": size, "count": messages,
+                case["runs"].append({"mode": mode, "pipe_receive": pipe_receive, "trial": trial, "payload_bytes": size, "count": messages,
                                      "summary": stats, "file": filename, "sha256": hashlib.sha256(data).hexdigest()})
                 report["execution_order"].append({"payload_bytes": size, "trial": trial, "mode": mode})
                 (directory / "partial.json").write_text(json.dumps(report, separators=(",", ":"), allow_nan=False) + "\n")
+    report["comparisons"] = comparisons(report)
     write_report(report, directory)
     (directory / "partial.json").unlink()
     return report
@@ -66,9 +67,10 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("results/local/experiment"))
     parser.add_argument("--sizes", type=int, nargs="+", default=DEFAULT_SIZES)
     parser.add_argument("--pairs", type=int, default=4)
+    parser.add_argument("--pipe-receive", choices=("into", "bytes"), default="into")
     parser.add_argument("--count", type=int, help="Override the default size-dependent message budget; marked in the report")
     args = parser.parse_args()
-    benchmark(args.output, args.sizes, args.pairs, args.count)
+    benchmark(args.output, args.sizes, args.pairs, args.count, args.pipe_receive)
 
 
 if __name__ == "__main__":

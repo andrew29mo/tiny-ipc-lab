@@ -3,11 +3,15 @@
 import hashlib
 import json
 import multiprocessing as mp
+import multiprocessing.connection as mp_connection
 from multiprocessing.shared_memory import SharedMemory
+import os
 from pathlib import Path
 import platform
+from queue import Empty, Queue
 import resource
 import sys
+from threading import Thread
 import time
 
 import numpy as np
@@ -30,7 +34,7 @@ def highwater():
     return int(value if sys.platform == "darwin" else value * 1024)
 
 
-def producer(data, control, mode, payload_bytes, count, name):
+def producer(data, control, mode, payload_bytes, count, name, pipe_receive):
     block = sender = None
     try:
         block = SharedMemory(name=name) if name else None
@@ -77,11 +81,11 @@ def producer(data, control, mode, payload_bytes, count, name):
         control.close()
 
 
-def consumer(data, control, mode, payload_bytes, count, name):
+def consumer(data, control, mode, payload_bytes, count, name, pipe_receive):
     block = receiver = None
     try:
         block = SharedMemory(name=name) if name else None
-        receiver = Receiver(data, mode, payload_bytes, block)
+        receiver = Receiver(data, mode, payload_bytes, block, pipe_receive)
         control.send({"event": "ready"})
         for seq in range(WARMUP):
             receiver.receive(seq)
@@ -118,21 +122,30 @@ class TrialFailure(RuntimeError):
         self.cleanup = cleanup
 
 
-def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
+def run_trial(mode, payload_bytes, count, *, pipe_receive="into", timeout=30., _on_warm=None):
     check_config(mode, payload_bytes, count)
-    if type(timeout) not in (int, float) or not 0 < timeout <= 300:
+    if pipe_receive not in ("into", "bytes") or type(timeout) not in (int, float) or not 0 < timeout <= 300:
         raise ValueError("Invalid trial timeout")
     context = mp.get_context("spawn")
-    block = SharedMemory(create=True, size=payload_bytes) if mode == "shared" else None
-    name = block.name if block else None
-    left, right = context.Pipe()
-    controls, child_controls = zip(*(context.Pipe() for _ in range(2)))
-    workers = [context.Process(target=target, args=(data, ctl, mode, payload_bytes, count, name))
-               for target, data, ctl in zip((producer, consumer), (left, right), child_controls)]
+    block = None
+    name = None
+    connections, controls, child_controls, workers, readers = [], [], [], [], []
     processes, samples, result = [], [], None
     failure, forced = None, False
     cleanup = {}
+    deadline = time.monotonic() + timeout
     try:
+        block = SharedMemory(create=True, size=payload_bytes) if mode == "shared" else None
+        name = block.name if block else None
+        left, right = context.Pipe()
+        connections.extend((left, right))
+        for _ in range(2):
+            parent, child = context.Pipe()
+            connections.extend((parent, child))
+            controls.append(parent)
+            child_controls.append(child)
+        workers = [context.Process(target=target, args=(data, ctl, mode, payload_bytes, count, name, pipe_receive))
+                   for target, data, ctl in zip((producer, consumer), (left, right), child_controls)]
         for worker in workers:
             worker.start()
             processes.append(psutil.Process(worker.pid))
@@ -140,22 +153,33 @@ def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
         right.close()
         for ctl in child_controls:
             ctl.close()
-        deadline = time.monotonic() + timeout
+        events = Queue()
+        def read_control(index, ctl):
+            try:
+                while True:
+                    events.put((index, ctl.recv()))
+            except (EOFError, OSError):
+                events.put((index, {"event": "eof"}))
+        for index, ctl in enumerate(controls):
+            reader = Thread(target=read_control, args=(index, ctl), daemon=True)
+            reader.start()
+            readers.append(reader)
 
         def collect(event, memory=False):
             found = {}
             while len(found) < 2:
                 if time.monotonic() >= deadline:
                     raise TimeoutError("Trial deadline exceeded")
-                for index, ctl in enumerate(controls):
-                    if index in found:
-                        continue
-                    if ctl.poll():
-                        value = ctl.recv()
-                        if value.get("event") != event:
+                try:
+                    while True:
+                        index, value = events.get_nowait()
+                        if index in found or not isinstance(value, dict) or value.get("event") != event:
                             raise RuntimeError("Worker failed or unexpected lifecycle event")
                         found[index] = value
-                    elif workers[index].exitcode is not None:
+                except Empty:
+                    pass
+                for index, worker in enumerate(workers):
+                    if index not in found and worker.exitcode is not None:
                         raise RuntimeError("Worker exited before completing the protocol")
                 if memory:
                     sample()
@@ -182,11 +206,14 @@ def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
         window_end = time.perf_counter()
         for ctl in controls:
             ctl.send("close")
-        result = {"mode": mode, "payload_bytes": payload_bytes, "count": count, "warmup": WARMUP,
+        result = {"mode": mode, "pipe_receive": pipe_receive, "payload_bytes": payload_bytes, "count": count, "warmup": WARMUP,
                   "producer": p_result, "consumer": c_result, "rss_samples": samples,
                   "memory_window": {"start_s": window_start, "end_s": window_end},
                   "environment": {"python": platform.python_version(), "numpy": np.__version__,
-                                  "psutil": psutil.__version__, "optimization": sys.flags.optimize}}
+                                  "psutil": psutil.__version__, "optimization": sys.flags.optimize,
+                                  "connection_source_sha256": hashlib.sha256(Path(mp_connection.__file__).read_bytes()).hexdigest(),
+                                  "runtime_options": {k: os.environ.get(k) for k in
+                                      ("MallocLargeCache", "MallocAggressiveMadvise", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS")}}}
     except BaseException as error:
         failure = error
     finally:
@@ -202,7 +229,9 @@ def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
             if worker.is_alive():
                 worker.kill()
                 worker.join(2)
-        for ctl in (*controls, *child_controls, left, right):
+        for reader in readers:
+            reader.join(2)  # Worker death closes the peer, including a half-written control frame.
+        for ctl in connections:
             ctl.close()
         unlinked = None
         if block is not None:
@@ -217,6 +246,7 @@ def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
                 unlinked = False
         cleanup = {"exitcodes": [w.exitcode for w in workers], "forced_termination": forced,
                    "all_workers_exited": all(w.pid is None or not w.is_alive() for w in workers),
+                   "control_readers_exited": all(not r.is_alive() for r in readers),
                    "segment_unlinked": unlinked}
         for worker in workers:
             if worker.pid is not None and not worker.is_alive():
@@ -224,6 +254,7 @@ def run_trial(mode, payload_bytes, count, *, timeout=30., _on_warm=None):
     if failure is not None:
         raise TrialFailure(type(failure).__name__ + ": " + str(failure), cleanup) from failure
     if cleanup != {"exitcodes": [0, 0], "forced_termination": False, "all_workers_exited": True,
+                   "control_readers_exited": True,
                    "segment_unlinked": True if mode == "shared" else None}:
         raise TrialFailure("Unclean worker or shared-memory exit", cleanup)
     result["cleanup"] = cleanup

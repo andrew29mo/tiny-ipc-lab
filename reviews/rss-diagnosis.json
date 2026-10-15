@@ -1,0 +1,701 @@
+{
+  "schema_version": 1,
+  "payload_bytes": 4194304,
+  "count": 128,
+  "script_sha256": "d0e1d35f96a3be4d904b05de184bec64df5b727b8a3887a9e1d42a6876cbb5f7",
+  "connection_source_sha256": "c2f2d6f3d32d48d4d8c51a7d7c98766a04e958cae72a67c7f905438a7c332bdd",
+  "host": {
+    "os": "Darwin",
+    "release": "27.0.0",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "psutil": "7.0.0"
+  },
+  "runs": [
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 0,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40812544,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 82870272,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 117178368,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727228
+        },
+        {
+          "count": 32,
+          "rss_bytes": 185204736,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 316768256,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 317865984,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 317865984,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 317865984,
+      "after_gc_rss_bytes": 317865984,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "bytearray",
+      "cache_override": null,
+      "trial": 0,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 44908544,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 81166336,
+          "traced_current_bytes": 431,
+          "traced_peak_bytes": 4727000
+        },
+        {
+          "count": 16,
+          "rss_bytes": 115605504,
+          "traced_current_bytes": 587,
+          "traced_peak_bytes": 4727156
+        },
+        {
+          "count": 32,
+          "rss_bytes": 184172544,
+          "traced_current_bytes": 863,
+          "traced_peak_bytes": 4727432
+        },
+        {
+          "count": 64,
+          "rss_bytes": 316571648,
+          "traced_current_bytes": 1139,
+          "traced_peak_bytes": 4727708
+        },
+        {
+          "count": 96,
+          "rss_bytes": 316571648,
+          "traced_current_bytes": 1447,
+          "traced_peak_bytes": 4728016
+        },
+        {
+          "count": 128,
+          "rss_bytes": 316571648,
+          "traced_current_bytes": 1723,
+          "traced_peak_bytes": 4728292
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 316571648,
+      "after_gc_rss_bytes": 316571648,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "bytes",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 0,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40714240,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 53149696,
+          "traced_current_bytes": 487,
+          "traced_peak_bytes": 4726640
+        },
+        {
+          "count": 16,
+          "rss_bytes": 53329920,
+          "traced_current_bytes": 763,
+          "traced_peak_bytes": 4726916
+        },
+        {
+          "count": 32,
+          "rss_bytes": 53608448,
+          "traced_current_bytes": 1039,
+          "traced_peak_bytes": 4727192
+        },
+        {
+          "count": 64,
+          "rss_bytes": 53608448,
+          "traced_current_bytes": 1315,
+          "traced_peak_bytes": 4727468
+        },
+        {
+          "count": 96,
+          "rss_bytes": 53608448,
+          "traced_current_bytes": 1623,
+          "traced_peak_bytes": 4727776
+        },
+        {
+          "count": 128,
+          "rss_bytes": 53641216,
+          "traced_current_bytes": 1899,
+          "traced_peak_bytes": 4728052
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 53641216,
+      "after_gc_rss_bytes": 53641216,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": "0",
+      "trial": 0,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40058880,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 46465024,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 46465024,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727229
+        },
+        {
+          "count": 32,
+          "rss_bytes": 46481408,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 46481408,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 46481408,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 46481408,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 46481408,
+      "after_gc_rss_bytes": 46481408,
+      "malloc_large_cache": "0"
+    },
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": "0",
+      "trial": 1,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40140800,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 46530560,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 46530560,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727228
+        },
+        {
+          "count": 32,
+          "rss_bytes": 46546944,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 46546944,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 46546944,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 46546944,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 46546944,
+      "after_gc_rss_bytes": 46546944,
+      "malloc_large_cache": "0"
+    },
+    {
+      "api": "bytes",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 1,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40550400,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 51249152,
+          "traced_current_bytes": 487,
+          "traced_peak_bytes": 4726640
+        },
+        {
+          "count": 16,
+          "rss_bytes": 53493760,
+          "traced_current_bytes": 763,
+          "traced_peak_bytes": 4726916
+        },
+        {
+          "count": 32,
+          "rss_bytes": 54706176,
+          "traced_current_bytes": 1039,
+          "traced_peak_bytes": 4727192
+        },
+        {
+          "count": 64,
+          "rss_bytes": 54706176,
+          "traced_current_bytes": 1315,
+          "traced_peak_bytes": 4727468
+        },
+        {
+          "count": 96,
+          "rss_bytes": 54706176,
+          "traced_current_bytes": 1623,
+          "traced_peak_bytes": 4727776
+        },
+        {
+          "count": 128,
+          "rss_bytes": 54706176,
+          "traced_current_bytes": 1899,
+          "traced_peak_bytes": 4728052
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 54706176,
+      "after_gc_rss_bytes": 54706176,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "bytearray",
+      "cache_override": null,
+      "trial": 1,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 44892160,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 84443136,
+          "traced_current_bytes": 431,
+          "traced_peak_bytes": 4727000
+        },
+        {
+          "count": 16,
+          "rss_bytes": 118390784,
+          "traced_current_bytes": 587,
+          "traced_peak_bytes": 4727156
+        },
+        {
+          "count": 32,
+          "rss_bytes": 186302464,
+          "traced_current_bytes": 863,
+          "traced_peak_bytes": 4727432
+        },
+        {
+          "count": 64,
+          "rss_bytes": 317915136,
+          "traced_current_bytes": 1139,
+          "traced_peak_bytes": 4727708
+        },
+        {
+          "count": 96,
+          "rss_bytes": 317915136,
+          "traced_current_bytes": 1447,
+          "traced_peak_bytes": 4728016
+        },
+        {
+          "count": 128,
+          "rss_bytes": 317915136,
+          "traced_current_bytes": 1723,
+          "traced_peak_bytes": 4728292
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 317915136,
+      "after_gc_rss_bytes": 317915136,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 1,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40583168,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 82755584,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 116948992,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727228
+        },
+        {
+          "count": 32,
+          "rss_bytes": 184893440,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 316456960,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 316456960,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 316456960,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 316456960,
+      "after_gc_rss_bytes": 316456960,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 2,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40648704,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 82853888,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 116801536,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727228
+        },
+        {
+          "count": 32,
+          "rss_bytes": 184745984,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 316342272,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 316342272,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 316342272,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 316342272,
+      "after_gc_rss_bytes": 316342272,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "bytearray",
+      "cache_override": null,
+      "trial": 2,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 44875776,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 84361216,
+          "traced_current_bytes": 431,
+          "traced_peak_bytes": 4727000
+        },
+        {
+          "count": 16,
+          "rss_bytes": 118308864,
+          "traced_current_bytes": 587,
+          "traced_peak_bytes": 4727156
+        },
+        {
+          "count": 32,
+          "rss_bytes": 186220544,
+          "traced_current_bytes": 863,
+          "traced_peak_bytes": 4727432
+        },
+        {
+          "count": 64,
+          "rss_bytes": 317784064,
+          "traced_current_bytes": 1139,
+          "traced_peak_bytes": 4727708
+        },
+        {
+          "count": 96,
+          "rss_bytes": 317784064,
+          "traced_current_bytes": 1447,
+          "traced_peak_bytes": 4728016
+        },
+        {
+          "count": 128,
+          "rss_bytes": 317784064,
+          "traced_current_bytes": 1723,
+          "traced_peak_bytes": 4728292
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 317784064,
+      "after_gc_rss_bytes": 317784064,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "bytes",
+      "target": "numpy",
+      "cache_override": null,
+      "trial": 2,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 40779776,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 53903360,
+          "traced_current_bytes": 487,
+          "traced_peak_bytes": 4726640
+        },
+        {
+          "count": 16,
+          "rss_bytes": 53919744,
+          "traced_current_bytes": 763,
+          "traced_peak_bytes": 4726916
+        },
+        {
+          "count": 32,
+          "rss_bytes": 53919744,
+          "traced_current_bytes": 1039,
+          "traced_peak_bytes": 4727192
+        },
+        {
+          "count": 64,
+          "rss_bytes": 53919744,
+          "traced_current_bytes": 1315,
+          "traced_peak_bytes": 4727468
+        },
+        {
+          "count": 96,
+          "rss_bytes": 53919744,
+          "traced_current_bytes": 1623,
+          "traced_peak_bytes": 4727776
+        },
+        {
+          "count": 128,
+          "rss_bytes": 53919744,
+          "traced_current_bytes": 1899,
+          "traced_peak_bytes": 4728052
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 53919744,
+      "after_gc_rss_bytes": 53919744,
+      "malloc_large_cache": null
+    },
+    {
+      "api": "into",
+      "target": "numpy",
+      "cache_override": "0",
+      "trial": 2,
+      "verified_messages": 128,
+      "payload_crc32": 702872957,
+      "exitcode": 0,
+      "samples": [
+        {
+          "count": 0,
+          "rss_bytes": 39993344,
+          "traced_current_bytes": 160,
+          "traced_peak_bytes": 160
+        },
+        {
+          "count": 8,
+          "rss_bytes": 46350336,
+          "traced_current_bytes": 503,
+          "traced_peak_bytes": 4727072
+        },
+        {
+          "count": 16,
+          "rss_bytes": 46366720,
+          "traced_current_bytes": 659,
+          "traced_peak_bytes": 4727228
+        },
+        {
+          "count": 32,
+          "rss_bytes": 46366720,
+          "traced_current_bytes": 935,
+          "traced_peak_bytes": 4727504
+        },
+        {
+          "count": 64,
+          "rss_bytes": 46366720,
+          "traced_current_bytes": 1211,
+          "traced_peak_bytes": 4727780
+        },
+        {
+          "count": 96,
+          "rss_bytes": 46366720,
+          "traced_current_bytes": 1519,
+          "traced_peak_bytes": 4728088
+        },
+        {
+          "count": 128,
+          "rss_bytes": 46366720,
+          "traced_current_bytes": 1795,
+          "traced_peak_bytes": 4728364
+        }
+      ],
+      "gc_collected": 6,
+      "before_gc_rss_bytes": 46366720,
+      "after_gc_rss_bytes": 46366720,
+      "malloc_large_cache": "0"
+    }
+  ]
+}
